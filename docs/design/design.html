@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canteen App - UI Design Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== DESIGN TOKENS (map 1-1 sang Color.kt / Type.kt / Shape.kt trong Compose) ===== */
+:root{
+  --primary:#EA580C; --on-primary:#FFFFFF; --primary-container:#FFEDD5; --on-primary-container:#9A3412;
+  --secondary:#F59E0B; --secondary-container:#FEF3C7;
+  --background:#FFFBF5; --surface:#FFFFFF; --surface-variant:#F5F5F4;
+  --on-surface:#292524; --on-surface-variant:#78716C; --outline:#E7E5E4;
+  --success:#16A34A; --success-container:#DCFCE7;
+  --error:#DC2626; --error-container:#FEE2E2;
+  --info:#2563EB; --info-container:#DBEAFE;
+  --r-card:16px; --r-button:12px; --r-chip:999px; --r-sheet:24px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#E7E5E4;color:var(--on-surface);padding:32px 24px 64px}
+h1{font-size:28px;font-weight:800;margin-bottom:4px}
+h2{font-size:20px;font-weight:700;margin:40px 0 16px}
+.lead{color:#57534E;max-width:900px;line-height:1.6;font-size:14px}
+.note{font-size:12px;color:#57534E;margin-top:8px;max-width:360px;line-height:1.5}
+
+/* token board */
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;max-width:1100px}
+.sw{background:#fff;border-radius:12px;overflow:hidden;font-size:12px;border:1px solid #D6D3D1}
+.sw i{display:block;height:44px;border-bottom:1px solid #0001}
+.sw b{display:block;padding:6px 8px 0}.sw span{display:block;padding:0 8px 6px;color:#78716C;font-family:monospace}
+.type-board{background:#fff;border-radius:16px;padding:20px;max-width:700px;display:grid;gap:10px}
+.type-board div{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #F5F5F4;padding-bottom:8px}
+.type-board small{color:#78716C;font-family:monospace;font-size:11px}
+
+/* device frames (1px = 1dp) */
+.row{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}
+.col{display:flex;flex-direction:column}
+.cap{font-weight:700;font-size:14px;margin-bottom:8px}
+.phone{width:360px;height:740px;background:var(--background);border-radius:32px;border:8px solid #1C1917;overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 12px 32px #0003}
+.tablet{width:1024px;height:620px;background:var(--background);border-radius:24px;border:10px solid #1C1917;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 32px #0003}
+.statusbar{height:24px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font-size:11px;font-weight:600;color:var(--on-surface)}
+.appbar{height:56px;flex:none;display:flex;align-items:center;padding:0 16px;gap:12px;font-size:20px;font-weight:700}
+.appbar .sp{flex:1}
+.ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;position:relative}
+.badge{position:absolute;top:2px;right:0;background:var(--primary);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:grid;place-items:center}
+.body{flex:1;overflow:hidden;padding:0 16px}
+.bottomnav{height:64px;flex:none;background:var(--surface);border-top:1px solid var(--outline);display:flex}
+.bottomnav div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600;color:var(--on-surface-variant)}
+.bottomnav div span{font-size:20px;width:56px;height:28px;border-radius:14px;display:grid;place-items:center}
+.bottomnav .on{color:var(--on-primary-container)}
+.bottomnav .on span{background:var(--primary-container)}
+
+/* components */
+.btn{height:48px;border-radius:var(--r-button);background:var(--primary);color:var(--on-primary);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.btn.ghost{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+.btn.danger{background:var(--error-container);color:var(--error)}
+.btn.off{background:var(--outline);color:#A8A29E}
+.btn.sm{height:36px;font-size:13px;width:auto;padding:0 16px}
+.field{height:56px;border:1.5px solid var(--outline);border-radius:var(--r-button);background:var(--surface);padding:0 16px;display:flex;align-items:center;color:var(--on-surface-variant);font-size:14px;margin-bottom:12px}
+.chips{display:flex;gap:8px;overflow:hidden;padding:4px 0 12px}
+.chip{height:34px;padding:0 14px;border-radius:var(--r-chip);border:1.5px solid var(--outline);background:var(--surface);font-size:13px;font-weight:600;display:flex;align-items:center;white-space:nowrap}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.card{background:var(--surface);border-radius:var(--r-card);border:1px solid var(--outline);padding:12px}
+.item{display:flex;gap:12px;margin-bottom:12px;align-items:center}
+.thumb{width:72px;height:72px;border-radius:12px;background:var(--primary-container);display:grid;place-items:center;font-size:34px;flex:none}
+.item .t{flex:1;min-width:0}
+.item .t b{display:block;font-size:15px;font-weight:700}
+.item .t small{display:block;color:var(--on-surface-variant);font-size:12px;margin:2px 0 6px}
+.price{font-weight:800;color:var(--primary);font-size:15px}
+.add{width:36px;height:36px;border-radius:12px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:20px;font-weight:700;flex:none}
+.item.soldout{opacity:.45}
+.item.soldout .add{background:var(--outline);color:#A8A29E}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:var(--r-chip)}
+.tag.red{background:var(--error-container);color:var(--error)}
+.tag.green{background:var(--success-container);color:var(--success)}
+.tag.amber{background:var(--secondary-container);color:#92400E}
+.tag.blue{background:var(--info-container);color:var(--info)}
+.tag.grey{background:var(--surface-variant);color:var(--on-surface-variant)}
+.sec{font-size:13px;font-weight:700;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 10px}
+.qty{display:flex;align-items:center;gap:10px;font-weight:700}
+.qty u{text-decoration:none;width:30px;height:30px;border-radius:10px;background:var(--surface-variant);display:grid;place-items:center}
+.qty u.p{background:var(--primary);color:#fff}
+.sum{display:flex;justify-content:space-between;font-size:14px;padding:6px 0}
+.sum.big{font-size:18px;font-weight:800;border-top:1px dashed var(--outline);margin-top:6px;padding-top:12px}
+.footer{padding:12px 16px 16px;flex:none;background:var(--surface);border-top:1px solid var(--outline)}
+.slot{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1.5px solid var(--outline);border-radius:var(--r-card);background:var(--surface);margin-bottom:10px}
+.slot b{font-size:16px}.slot small{display:block;color:var(--on-surface-variant);font-size:12px;margin-top:2px}
+.slot.sel{border-color:var(--primary);background:var(--primary-container)}
+.slot.full{opacity:.5;background:var(--surface-variant)}
+.radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--outline)}
+.slot.sel .radio{border:7px solid var(--primary)}
+.code{background:var(--primary);color:#fff;border-radius:24px;padding:20px;text-align:center;margin:8px 0 16px}
+.code small{opacity:.85;font-size:13px}
+.code b{display:block;font-size:56px;letter-spacing:12px;font-weight:800;margin:6px 0 2px}
+.stepper{display:flex;justify-content:space-between;position:relative;margin:8px 0 16px}
+.stepper:before{content:"";position:absolute;top:13px;left:12%;right:12%;height:3px;background:var(--outline)}
+.step{flex:1;text-align:center;font-size:11px;font-weight:600;color:var(--on-surface-variant);position:relative}
+.step i{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--outline);margin:0 auto 6px;font-style:normal;color:#fff;font-size:13px}
+.step.done i{background:var(--success)}.step.done{color:var(--on-surface)}
+.step.now i{background:var(--primary);box-shadow:0 0 0 5px var(--primary-container)}.step.now{color:var(--primary);font-weight:700}
+.empty{display:grid;place-items:center;text-align:center;color:var(--on-surface-variant);font-size:13px;gap:8px;padding:24px}
+.empty span{font-size:48px}
+
+/* canteen (tablet) */
+.t-top{height:64px;flex:none;display:flex;align-items:center;padding:0 24px;gap:16px;background:var(--surface);border-bottom:1px solid var(--outline);font-weight:800;font-size:20px}
+.t-main{flex:1;display:flex;min-height:0}
+.rail{width:96px;flex:none;background:var(--surface);border-right:1px solid var(--outline);display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:8px}
+.rail div{width:76px;padding:8px 0;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--on-surface-variant)}
+.rail div span{font-size:22px}
+.rail .on{background:var(--primary-container);color:var(--on-primary-container)}
+.cols{flex:1;display:flex;gap:16px;padding:16px;overflow:hidden}
+.kcol{flex:1;min-width:0;background:var(--surface-variant);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.kcol h4{font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.order{background:var(--surface);border-radius:14px;padding:12px;border:1px solid var(--outline)}
+.order .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.order .h b{font-size:20px;letter-spacing:2px;font-weight:800}
+.order p{font-size:12px;color:var(--on-surface-variant);line-height:1.5;margin-bottom:8px}
+.switch{width:52px;height:30px;border-radius:15px;background:var(--outline);position:relative;flex:none}
+.switch:after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003}
+.switch.on{background:var(--success)}.switch.on:after{left:25px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.keypad div{height:56px;border-radius:14px;background:var(--surface);border:1px solid var(--outline);display:grid;place-items:center;font-size:22px;font-weight:700}
+.pin{display:flex;gap:12px;justify-content:center;margin:16px 0}
+.pin div{width:56px;height:68px;border-radius:14px;border:2px solid var(--outline);background:var(--surface);display:grid;place-items:center;font-size:32px;font-weight:800}
+.pin div.f{border-color:var(--primary)}
+.flow{background:#fff;border-radius:16px;padding:16px 20px;max-width:1100px;font-size:13px;line-height:1.8}
+</style>
+</head>
+<body>
+
+<h1>Canteen App - UI Design Reference</h1>
+<p class="lead">Mockup HTML cho Antigravity vẽ lại bằng <b>Jetpack Compose + Material 3</b>. Mọi kích thước tính theo <b>dp</b> (1px trong file này = 1dp). Phone frame 360 x 740dp, tablet căng tin 1024 x 620dp (landscape). Emoji chỉ là ảnh giữ chỗ: trong app thật dùng <code>imageUrl</code> với Coil, có placeholder. Phong cách: tươi sáng, ấm, bo góc lớn, nhiều khoảng trắng.</p>
+
+<h2>1. Design tokens</h2>
+<div class="board">
+  <div class="sw"><i style="background:#EA580C"></i><b>primary</b><span>#EA580C</span></div>
+  <div class="sw"><i style="background:#FFEDD5"></i><b>primaryContainer</b><span>#FFEDD5</span></div>
+  <div class="sw"><i style="background:#9A3412"></i><b>onPrimaryContainer</b><span>#9A3412</span></div>
+  <div class="sw"><i style="background:#F59E0B"></i><b>secondary</b><span>#F59E0B</span></div>
+  <div class="sw"><i style="background:#FEF3C7"></i><b>secondaryContainer</b><span>#FEF3C7</span></div>
+  <div class="sw"><i style="background:#FFFBF5"></i><b>background</b><span>#FFFBF5</span></div>
+  <div class="sw"><i style="background:#FFFFFF"></i><b>surface</b><span>#FFFFFF</span></div>
+  <div class="sw"><i style="background:#F5F5F4"></i><b>surfaceVariant</b><span>#F5F5F4</span></div>
+  <div class="sw"><i style="background:#292524"></i><b>onSurface</b><span>#292524</span></div>
+  <div class="sw"><i style="background:#78716C"></i><b>onSurfaceVariant</b><span>#78716C</span></div>
+  <div class="sw"><i style="background:#E7E5E4"></i><b>outline</b><span>#E7E5E4</span></div>
+  <div class="sw"><i style="background:#16A34A"></i><b>success</b><span>#16A34A</span></div>
+  <div class="sw"><i style="background:#DCFCE7"></i><b>successContainer</b><span>#DCFCE7</span></div>
+  <div class="sw"><i style="background:#DC2626"></i><b>error</b><span>#DC2626</span></div>
+  <div class="sw"><i style="background:#FEE2E2"></i><b>errorContainer</b><span>#FEE2E2</span></div>
+  <div class="sw"><i style="background:#2563EB"></i><b>info</b><span>#2563EB</span></div>
+  <div class="sw"><i style="background:#DBEAFE"></i><b>infoContainer</b><span>#DBEAFE</span></div>
+</div>
+
+<h2>Typography, shape, spacing</h2>
+<div class="type-board">
+  <div><span style="font-size:28px;font-weight:800">Headline 28 / ExtraBold</span><small>headlineLarge · mã nhận đồ 56/800</small></div>
+  <div><span style="font-size:20px;font-weight:700">Title 20 / Bold</span><small>titleLarge · app bar</small></div>
+  <div><span style="font-size:16px;font-weight:700">Title 16 / Bold</span><small>titleMedium · tên món, giờ</small></div>
+  <div><span style="font-size:14px;font-weight:500">Body 14 / Medium</span><small>bodyMedium</small></div>
+  <div><span style="font-size:12px;font-weight:500;color:#78716C">Caption 12 / Medium</span><small>bodySmall · mô tả, phụ</small></div>
+  <div><span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#78716C">Label 13 / Bold caps</span><small>labelLarge · tiêu đề nhóm</small></div>
+</div>
+<p class="note" style="max-width:900px">Font: <b>Plus Jakarta Sans</b> (Google Fonts, dùng <code>androidx.compose.ui:ui-text-google-fonts</code>). Shape: card 16dp, button 12dp, chip pill (full), bottom sheet 24dp, thumbnail 12dp. Spacing: 4 / 8 / 12 / 16 / 24dp, lề màn hình 16dp. Touch target tối thiểu 44dp (nút chính 48dp). Light theme là mặc định, không cần dark mode cho demo.</p>
+
+<h2>2. App học sinh (STUDENT) - bottom nav: Menu · Giỏ hàng · Đơn của tôi</h2>
+<div class="row">
+
+  <!-- Login -->
+  <div class="col"><div class="cap">S1. LoginScreen</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:02</span><span>5G ▮▮▮</span></div>
+    <div class="body" style="display:flex;flex-direction:column;justify-content:center;padding:0 24px">
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="width:88px;height:88px;border-radius:28px;background:var(--primary);display:grid;place-items:center;font-size:44px;margin:0 auto 16px">🍱</div>
+        <div style="font-size:28px;font-weight:800">Căng tin</div>
+        <div style="color:var(--on-surface-variant);font-size:14px;margin-top:4px">Đặt cơm trưa, không phải xếp hàng</div>
+      </div>
+      <div class="field">✉️&nbsp; student@demo.com</div>
+      <div class="field">🔒&nbsp; ••••••</div>
+      <div class="btn" style="margin-top:8px">Đăng nhập</div>
+      <div style="text-align:center;color:var(--error);font-size:12px;margin-top:12px">Sai email hoặc mật khẩu (hiện khi lỗi)</div>
+    </div>
+  </div>
+  <p class="note">TextField outlined cao 56dp, bo 12dp, nút 48dp. Đang đăng nhập: nút hiện CircularProgressIndicator trắng. Lỗi hiển thị dưới nút, màu error.</p></div>
+
+  <!-- Menu -->
+  <div class="col"><div class="cap">S2. MenuScreen</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:02</span><span>5G ▮▮▮</span></div>
+    <div class="appbar"><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--on-surface-variant)">Xin chào, Học sinh Demo</div>Thực đơn hôm nay</div><div class="ic">⎋</div></div>
+    <div class="body">
+      <div class="chips"><div class="chip on">Tất cả</div><div class="chip">Cơm</div><div class="chip">Bún/Mì</div><div class="chip">Ăn nhanh</div><div class="chip">Đồ uống</div></div>
+      <div class="sec">Cơm</div>
+      <div class="card item"><div class="thumb">🍛</div><div class="t"><b>Cơm sườn nướng</b><small>Sườn, trứng, dưa leo</small><span class="price">35.000đ</span></div><div class="add">+</div></div>
+      <div class="card item"><div class="thumb">🍚</div><div class="t"><b>Cơm gà xối mỡ</b><small>Gà giòn, canh, rau</small><span class="price">32.000đ</span></div><div class="qty"><u>−</u>2<u class="p">+</u></div></div>
+      <div class="card item soldout"><div class="thumb">🍖</div><div class="t"><b>Cơm thịt kho</b><small><span class="tag red">Hết món</span></small><span class="price">30.000đ</span></div><div class="add">+</div></div>
+      <div class="sec">Bún / Mì</div>
+      <div class="card item"><div class="thumb">🍜</div><div class="t"><b>Bún bò</b><small>Giò, chả, rau sống</small><span class="price">35.000đ</span></div><div class="add">+</div></div>
+    </div>
+    <div style="padding:0 16px 8px;flex:none"><div class="btn" style="justify-content:space-between;padding:0 20px"><span>🛒 2 món</span><span>64.000đ</span></div></div>
+    <div class="bottomnav"><div class="on"><span>🍽</span>Menu</div><div><span>🛒</span>Giỏ hàng</div><div><span>🧾</span>Đơn của tôi</div></div>
+  </div>
+  <p class="note">Hàng món: Card 12dp padding, ảnh 72dp bo 12dp. Món hết: alpha 0.45, tag "Hết món" đỏ, nút + xám và disable. Khi giỏ có món, hiện thanh tổng giữ cố định phía trên bottom nav (nút full-width, bấm đi tới Giỏ hàng). Chip lọc theo category cuộn ngang.</p></div>
+
+  <!-- Cart -->
+  <div class="col"><div class="cap">S3. CartScreen</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:03</span><span>5G ▮▮▮</span></div>
+    <div class="appbar">Giỏ hàng</div>
+    <div class="body">
+      <div class="card item"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍚</div><div class="t"><b>Cơm gà xối mỡ</b><span class="price">32.000đ</span></div><div class="qty"><u>−</u>2<u class="p">+</u></div></div>
+      <div class="card item"><div class="thumb" style="width:56px;height:56px;font-size:26px">🥤</div><div class="t"><b>Trà tắc</b><span class="price">15.000đ</span></div><div class="qty"><u>−</u>1<u class="p">+</u></div></div>
+      <div class="card" style="margin-top:16px">
+        <div class="sum"><span>Tạm tính (3 món)</span><span>79.000đ</span></div>
+        <div class="sum"><span>Phí dịch vụ</span><span>0đ</span></div>
+        <div class="sum big"><span>Tổng</span><span style="color:var(--primary)">79.000đ</span></div>
+      </div>
+    </div>
+    <div class="footer"><div class="btn">Chọn giờ nhận →</div></div>
+    <div class="bottomnav"><div><span>🍽</span>Menu</div><div class="on"><span>🛒</span>Giỏ hàng</div><div><span>🧾</span>Đơn của tôi</div></div>
+  </div>
+  <p class="note">Vuốt trái để xóa món (hoặc về 0 thì xóa). Giỏ rỗng: empty state "Giỏ hàng trống" + nút "Xem thực đơn".</p></div>
+
+  <!-- Slot -->
+  <div class="col"><div class="cap">S4. SlotPickerScreen</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:04</span><span>5G ▮▮▮</span></div>
+    <div class="appbar"><div class="ic">←</div>Chọn giờ nhận</div>
+    <div class="body">
+      <div class="slot full"><div><b>11:15 - 11:30</b><small>Đã qua giờ</small></div><span class="tag grey">Đã qua</span></div>
+      <div class="slot sel"><div><b>11:30 - 11:45</b><small>Còn 4 suất</small></div><div class="radio"></div></div>
+      <div class="slot"><div><b>11:45 - 12:00</b><small>Còn 9 suất</small></div><div class="radio"></div></div>
+      <div class="slot full"><div><b>12:00 - 12:15</b><small>Đã đầy</small></div><span class="tag red">Hết suất</span></div>
+      <div class="card" style="background:var(--secondary-container);border:none;font-size:12px;margin-top:4px">💡 Thanh toán giả lập cho bản demo: trả tại quầy khi nhận đồ.</div>
+    </div>
+    <div class="footer"><div class="sum big" style="border:0;margin:0 0 8px;padding:0"><span>79.000đ</span><span style="font-size:13px;font-weight:600;color:var(--on-surface-variant)">11:30 - 11:45</span></div><div class="btn">Xác nhận đặt</div></div>
+  </div>
+  <p class="note">Khung đầy hoặc đã qua giờ: disable, alpha 0.5. Chưa chọn khung thì nút "Xác nhận đặt" xám (disable). Lỗi transaction ("Khung giờ đã đầy", "Món X đã hết") hiện bằng Snackbar.</p></div>
+
+  <!-- Status -->
+  <div class="col"><div class="cap">S5. OrderStatusScreen</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:20</span><span>5G ▮▮▮</span></div>
+    <div class="appbar"><div class="ic">←</div>Đơn của bạn</div>
+    <div class="body">
+      <div class="code"><small>Mã nhận đồ</small><b>4821</b><small>Khung giờ 11:30 - 11:45</small></div>
+      <div class="stepper">
+        <div class="step done"><i>✓</i>Đã nhận</div>
+        <div class="step now"><i>●</i>Đang chuẩn bị</div>
+        <div class="step"><i>3</i>Sẵn sàng</div>
+        <div class="step"><i>4</i>Hoàn thành</div>
+      </div>
+      <div class="card">
+        <div class="sec" style="margin-top:0">Chi tiết đơn</div>
+        <div class="sum"><span>2 × Cơm gà xối mỡ</span><span>64.000đ</span></div>
+        <div class="sum"><span>1 × Trà tắc</span><span>15.000đ</span></div>
+        <div class="sum big"><span>Tổng</span><span>79.000đ</span></div>
+      </div>
+      <div class="btn danger" style="margin-top:12px">Hủy đơn</div>
+    </div>
+    <div class="bottomnav"><div><span>🍽</span>Menu</div><div><span>🛒</span>Giỏ hàng</div><div class="on"><span>🧾</span>Đơn của tôi</div></div>
+  </div>
+  <p class="note">Màn hình quan trọng nhất. Mã 56sp/800, chữ trắng trên nền primary, bo 24dp. Stepper cập nhật realtime (snapshot listener): bước xong = xanh success + ✓, bước hiện tại = primary + vòng sáng, bước sau = xám. Khi READY: thẻ mã đổi sang nền success và hiện dòng "Đến quầy nhận đồ ngay!". Nút "Hủy đơn" chỉ hiện khi RECEIVED. COMPLETED/CANCELLED: bỏ stepper, hiện tag trạng thái.</p></div>
+
+  <!-- History -->
+  <div class="col"><div class="cap">S6. HistoryScreen (tab Đơn của tôi)</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:21</span><span>5G ▮▮▮</span></div>
+    <div class="appbar">Đơn của tôi</div>
+    <div class="body">
+      <div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:20px;letter-spacing:2px">#4821</b><span class="tag amber">Đang chuẩn bị</span></div><div style="font-size:12px;color:var(--on-surface-variant);margin:6px 0">11:30 - 11:45 · 3 món</div><div class="price">79.000đ</div></div>
+      <div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:20px;letter-spacing:2px">#1307</b><span class="tag grey">Hoàn thành</span></div><div style="font-size:12px;color:var(--on-surface-variant);margin:6px 0">Hôm qua · 1 món</div><div class="price">35.000đ</div></div>
+      <div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:20px;letter-spacing:2px">#9052</b><span class="tag red">Đã hủy</span></div><div style="font-size:12px;color:var(--on-surface-variant);margin:6px 0">2 ngày trước · 2 món</div><div class="price">50.000đ</div></div>
+    </div>
+    <div class="bottomnav"><div><span>🍽</span>Menu</div><div><span>🛒</span>Giỏ hàng</div><div class="on"><span>🧾</span>Đơn của tôi</div></div>
+  </div>
+  <p class="note">Mới nhất trước. Màu tag theo trạng thái: RECEIVED = blue, PREPARING = amber, READY = green, COMPLETED = grey, CANCELLED = red. Bấm vào mở OrderStatusScreen. Danh sách rỗng: empty state "Bạn chưa có đơn nào".</p></div>
+
+</div>
+
+<h2>3. App căng tin (CANTEEN) - tablet landscape, navigation rail: Đơn hàng · Thực đơn · Trả đồ</h2>
+<div class="col" style="margin-bottom:40px"><div class="cap">C1. OrdersScreen (kanban theo trạng thái, nhóm theo khung giờ bằng chip lọc)</div>
+<div class="tablet">
+  <div class="t-top">🍱 Căng tin · Quầy 1 <span style="flex:1"></span><span class="tag green" style="font-size:12px">● Đang nhận đơn</span><div class="ic">⎋</div></div>
+  <div class="t-main">
+    <div class="rail"><div class="on"><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div></div>
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <div class="chips" style="padding:12px 16px 0"><div class="chip on">Tất cả</div><div class="chip">11:15 - 11:30</div><div class="chip">11:30 - 11:45 (6)</div><div class="chip">11:45 - 12:00 (3)</div><div class="chip">12:00 - 12:15</div></div>
+      <div class="cols">
+        <div class="kcol"><h4>Đã nhận <span class="tag blue">2</span></h4>
+          <div class="order"><div class="h"><b>4821</b><span class="tag grey">11:30</span></div><p>Học sinh Demo<br>2× Cơm gà xối mỡ, 1× Trà tắc</p><div style="display:flex;gap:8px"><div class="btn sm">Bắt đầu làm</div><div class="btn sm danger">Hủy</div></div></div>
+          <div class="order"><div class="h"><b>7730</b><span class="tag grey">11:45</span></div><p>Nguyễn An<br>1× Bún bò</p><div style="display:flex;gap:8px"><div class="btn sm">Bắt đầu làm</div><div class="btn sm danger">Hủy</div></div></div>
+        </div>
+        <div class="kcol"><h4>Đang chuẩn bị <span class="tag amber">1</span></h4>
+          <div class="order"><div class="h"><b>2216</b><span class="tag grey">11:30</span></div><p>Trần Bình<br>1× Cơm sườn nướng</p><div class="btn sm" style="background:var(--success)">Sẵn sàng ✓</div></div>
+        </div>
+        <div class="kcol"><h4>Sẵn sàng lấy <span class="tag green">1</span></h4>
+          <div class="order" style="border-color:var(--success)"><div class="h"><b>5509</b><span class="tag green">READY</span></div><p>Lê Cường<br>2× Cơm sườn nướng</p><div style="display:flex;gap:8px"><div class="btn sm ghost">Hoàn thành</div><div class="btn sm danger">Không đến lấy</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note" style="max-width:900px">Ba cột: Đã nhận, Đang chuẩn bị, Sẵn sàng lấy (đơn COMPLETED/CANCELLED không hiện). Realtime. Thẻ đơn: mã 20sp/800 giãn chữ, tên khách, danh sách món, nút hành động đúng trạng thái kế tiếp. Chip trên cùng lọc theo khung giờ, kèm số đơn. Nút to (36dp trở lên) vì thao tác khi đang bận. Nếu số đơn nhiều thì cột cuộn dọc.</p></div>
+
+<div class="row">
+  <div class="col"><div class="cap">C2. MenuManageScreen (tablet: dùng chung layout rail, đây là phần nội dung)</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:05</span><span>▮▮▮</span></div>
+    <div class="appbar">Quản lý món hôm nay</div>
+    <div class="body">
+      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍛</div><div class="t"><b>Cơm sườn nướng</b><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
+      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍚</div><div class="t"><b>Cơm gà xối mỡ</b><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
+      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px;opacity:.5">🍖</div><div class="t"><b style="opacity:.6">Cơm thịt kho</b><span class="tag red">Hết món</span></div><div class="switch"></div></div>
+      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍜</div><div class="t"><b>Bún bò</b><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
+    </div>
+  </div>
+  <p class="note">Switch bật = còn món (success), tắt = hết món. Đổi ngay lập tức, học sinh thấy cập nhật realtime. Trên tablet hiển thị dạng lưới 2 cột trong vùng nội dung.</p></div>
+
+  <div class="col"><div class="cap">C3. VerifyCodeScreen (trả đồ)</div>
+  <div class="phone">
+    <div class="statusbar"><span>11:40</span><span>▮▮▮</span></div>
+    <div class="appbar">Trả đồ</div>
+    <div class="body" style="text-align:center">
+      <div style="color:var(--on-surface-variant);font-size:14px;margin-top:8px">Nhập mã 4 số trên điện thoại học sinh</div>
+      <div class="pin"><div>5</div><div>5</div><div class="f">0</div><div></div></div>
+      <div class="keypad"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div style="color:var(--error)">⌫</div><div>0</div><div style="background:var(--primary);color:#fff;border-color:var(--primary)">✓</div></div>
+    </div>
+  </div>
+  <p class="note">Đủ 4 số thì tự kiểm tra. Đúng: Snackbar/banner xanh "Đã trả đơn 5509 - Lê Cường" và xóa ô nhập. Sai hoặc đơn chưa READY: ô nhập rung nhẹ, viền đỏ, báo lỗi rõ ("Không tìm thấy mã", "Đơn chưa sẵn sàng"). Dùng bàn phím số tự vẽ như hình, ô cao 56dp.</p></div>
+</div>
+
+<h2>4. Quy tắc chung cho Compose</h2>
+<div class="flow">
+  • Tạo <code>ui/common/theme/</code> gồm <code>Color.kt</code> (token ở trên), <code>Type.kt</code> (Plus Jakarta Sans), <code>Shape.kt</code>, <code>Theme.kt</code> (<code>lightColorScheme</code> map từ token; luôn dùng light).<br>
+  • Component dùng chung trong <code>ui/common/</code>: <code>PrimaryButton</code>, <code>StatusTag(status)</code>, <code>MenuItemCard</code>, <code>QuantityStepper</code>, <code>EmptyState(icon, text)</code>, <code>LoadingBox</code>, <code>PinBox</code>.<br>
+  • <code>StatusTag</code> map: RECEIVED → infoContainer/info · PREPARING → secondaryContainer/#92400E · READY → successContainer/success · COMPLETED → surfaceVariant/onSurfaceVariant · CANCELLED → errorContainer/error.<br>
+  • Mọi danh sách có 3 trạng thái: loading (CircularProgressIndicator giữa màn hình), rỗng (EmptyState), lỗi (Snackbar hoặc thẻ lỗi kèm nút Thử lại).<br>
+  • Animation: chuyển bước stepper và đổi màu tag bằng <code>animateColorAsState</code> (200ms), không dùng animation nặng.<br>
+  • Phát hiện thiết bị: vai trò CANTEEN dùng <code>NavigationRail</code> + layout rộng khi width &gt;= 600dp, thu về <code>NavigationBar</code> nếu màn nhỏ. Vai trò STUDENT luôn dùng <code>NavigationBar</code> dưới cùng.<br>
+  • Tiền VND định dạng <code>"%,d".replace(',', '.') + "đ"</code>. Chuỗi hiển thị lấy từ <code>strings.xml</code> (tiếng Việt).
+</div>
+
+</body>
+</html>

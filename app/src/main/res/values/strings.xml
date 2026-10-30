@@ -1,0 +1,100 @@
+<resources>
+    <string name="app_name">Căng tin</string>
+    <string name="app_tagline">Đặt cơm trưa, không phải xếp hàng</string>
+
+    <!-- Auth -->
+    <string name="login_title">Căng tin</string>
+    <string name="login_subtitle">Đặt cơm trưa, không phải xếp hàng</string>
+    <string name="email_hint">Email (student@demo.com hoặc canteen@demo.com)</string>
+    <string name="password_hint">Mật khẩu</string>
+    <string name="btn_login">Đăng nhập</string>
+    <string name="btn_logout">Đăng xuất</string>
+    <string name="login_error">Sai email hoặc mật khẩu</string>
+
+    <!-- Student Navigation -->
+    <string name="nav_menu">Menu</string>
+    <string name="nav_cart">Giỏ hàng</string>
+    <string name="nav_orders">Đơn của tôi</string>
+
+    <!-- Canteen Navigation -->
+    <string name="nav_canteen_orders">Đơn hàng</string>
+    <string name="nav_canteen_menu">Thực đơn</string>
+    <string name="nav_canteen_verify">Trả đồ</string>
+
+    <!-- Student Menu -->
+    <string name="greeting_student">Xin chào, %1$s</string>
+    <string name="today_menu">Thực đơn hôm nay</string>
+    <string name="category_all">Tất cả</string>
+    <string name="sold_out">Hết món</string>
+    <string name="available">Còn món</string>
+    <string name="cart_summary">%1$d món</string>
+
+    <!-- Student Cart -->
+    <string name="cart_title">Giỏ hàng</string>
+    <string name="cart_empty">Giỏ hàng trống</string>
+    <string name="cart_empty_desc">Hãy chọn món ăn yêu thích từ thực đơn nhé!</string>
+    <string name="btn_view_menu">Xem thực đơn</string>
+    <string name="subtotal">Tạm tính (%1$d món)</string>
+    <string name="service_fee">Phí dịch vụ</string>
+    <string name="total">Tổng cộng</string>
+    <string name="btn_select_slot">Chọn giờ nhận →</string>
+
+    <!-- Student Slot Picker -->
+    <string name="slot_picker_title">Chọn giờ nhận</string>
+    <string name="slot_past">Đã qua</string>
+    <string name="slot_past_desc">Đã qua giờ</string>
+    <string name="slot_full">Hết suất</string>
+    <string name="slot_full_desc">Đã đầy</string>
+    <string name="slot_remaining">Còn %1$d suất</string>
+    <string name="demo_payment_hint">💡 Thanh toán giả lập cho bản demo: trả tại quầy khi nhận đồ.</string>
+    <string name="btn_confirm_order">Xác nhận đặt</string>
+
+    <!-- Student Order Status -->
+    <string name="order_status_title">Đơn của bạn</string>
+    <string name="pickup_code_label">Mã nhận đồ</string>
+    <string name="pickup_slot_label">Khung giờ %1$s</string>
+    <string name="pickup_ready_banner">Đến quầy nhận đồ ngay!</string>
+    <string name="order_details_title">Chi tiết đơn</string>
+    <string name="btn_cancel_order">Hủy đơn</string>
+    <string name="confirm_cancel_order_dialog">Bạn có chắc muốn hủy đơn hàng này?</string>
+
+    <!-- Statuses -->
+    <string name="status_received">Đã nhận</string>
+    <string name="status_preparing">Đang chuẩn bị</string>
+    <string name="status_ready">Sẵn sàng</string>
+    <string name="status_completed">Hoàn thành</string>
+    <string name="status_cancelled">Đã hủy</string>
+
+    <!-- Student History -->
+    <string name="history_title">Đơn của tôi</string>
+    <string name="history_empty">Bạn chưa có đơn nào</string>
+    <string name="history_empty_desc">Các đơn đã đặt sẽ xuất hiện tại đây.</string>
+
+    <!-- Canteen Orders -->
+    <string name="canteen_title">Căng tin · Quầy 1</string>
+    <string name="canteen_active_badge">● Đang nhận đơn</string>
+    <string name="col_received">Đã nhận</string>
+    <string name="col_preparing">Đang chuẩn bị</string>
+    <string name="col_ready">Sẵn sàng lấy</string>
+    <string name="btn_start_preparing">Bắt đầu làm</string>
+    <string name="btn_mark_ready">Sẵn sàng ✓</string>
+    <string name="btn_mark_complete">Hoàn thành</string>
+    <string name="btn_no_show">Không đến lấy</string>
+
+    <!-- Canteen Menu Manage -->
+    <string name="manage_menu_title">Quản lý món hôm nay</string>
+
+    <!-- Canteen Verify Code -->
+    <string name="verify_code_title">Trả đồ</string>
+    <string name="verify_code_subtitle">Nhập mã 4 số trên điện thoại học sinh</string>
+    <string name="verify_code_success">Đã trả đơn %1$s - %2$s</string>
+    <string name="verify_code_not_found">Không tìm thấy mã</string>
+    <string name="verify_code_not_ready">Đơn chưa sẵn sàng</string>
+
+    <!-- Common -->
+    <string name="retry">Thử lại</string>
+    <string name="currency_symbol">đ</string>
+    <string name="loading">Đang tải...</string>
+    <string name="unknown_error">Đã xảy ra lỗi, vui lòng thử lại</string>
+</resources>
+

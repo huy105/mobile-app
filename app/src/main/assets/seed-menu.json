@@ -1,0 +1,32 @@
+{
+  "_note": "Dữ liệu mẫu cho SeedRepository. imageUrl lấy từ Wikimedia Commons (ảnh công khai, chỉ dùng cho demo). Field 'date' để trống: SeedRepository gán bằng ngày hiện tại (yyyy-MM-dd) khi seed.",
+  "menuItems": [
+    {"name": "Cơm sườn nướng", "description": "Sườn nướng, trứng, dưa leo", "price": 35000, "category": "Cơm", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8e/Com-Tam-2008.jpg/960px-Com-Tam-2008.jpg"},
+    {"name": "Cơm thịt kho trứng", "description": "Thịt kho tàu, trứng, dưa chua", "price": 30000, "category": "Cơm", "inStock": false,
+     "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Caramelized_Pork_and_Eggs.jpg"},
+    {"name": "Gà rán giòn", "description": "Gà rán giòn, ăn kèm cơm", "price": 32000, "category": "Cơm", "inStock": true,
+     "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/2/20/Korean_fried_chicken_3_banban.jpg"},
+    {"name": "Bún bò Huế", "description": "Giò, chả, rau sống", "price": 35000, "category": "Bún/Mì", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fa/Bun_Bo_Hue_1.jpg/960px-Bun_Bo_Hue_1.jpg"},
+    {"name": "Phở bò", "description": "Phở bò tái, hành, quẩy", "price": 40000, "category": "Bún/Mì", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/45/Pho_Bo_by_Banh_%26_Mee_in_Kirkgate_Market.jpg/960px-Pho_Bo_by_Banh_%26_Mee_in_Kirkgate_Market.jpg"},
+    {"name": "Mì xào", "description": "Mì xào rau, trứng", "price": 28000, "category": "Bún/Mì", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Mie_Goreng_in_Bali.jpg/960px-Mie_Goreng_in_Bali.jpg"},
+    {"name": "Bánh mì thập cẩm", "description": "Chả, pate, rau, dưa chua", "price": 20000, "category": "Ăn nhanh", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Banh_mi_PaMi_1.jpg/960px-Banh_mi_PaMi_1.jpg"},
+    {"name": "Xôi thập cẩm", "description": "Xôi, ruốc, chả, hành phi", "price": 18000, "category": "Ăn nhanh", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Xoi_thap_cam.jpg/960px-Xoi_thap_cam.jpg"},
+    {"name": "Cà phê sữa đá", "description": "Cà phê phin, sữa đặc", "price": 18000, "category": "Đồ uống", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/Ca_Phe_Sua_Da.jpg/960px-Ca_Phe_Sua_Da.jpg"},
+    {"name": "Trà chanh", "description": "Trà chanh mát lạnh", "price": 15000, "category": "Đồ uống", "inStock": true,
+     "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a1/Iced_lemon_tea_-_Rawlab_Juice_%26_Tea.jpg/960px-Iced_lemon_tea_-_Rawlab_Juice_%26_Tea.jpg"}
+  ],
+  "timeSlots": [
+    {"label": "11:15 - 11:30", "startMinute": 675, "endMinute": 690, "maxOrders": 10, "currentOrders": 0},
+    {"label": "11:30 - 11:45", "startMinute": 690, "endMinute": 705, "maxOrders": 10, "currentOrders": 0},
+    {"label": "11:45 - 12:00", "startMinute": 705, "endMinute": 720, "maxOrders": 10, "currentOrders": 0},
+    {"label": "12:00 - 12:15", "startMinute": 720, "endMinute": 735, "maxOrders": 10, "currentOrders": 0}
+  ]
+}
+
