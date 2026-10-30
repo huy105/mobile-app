@@ -45,6 +45,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
 .appbar{height:56px;flex:none;display:flex;align-items:center;padding:0 16px;gap:12px;font-size:20px;font-weight:700}
 .appbar .sp{flex:1}
 .ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;position:relative}
+.logout{height:40px;padding:0 14px;border-radius:999px;background:var(--error-container);border:1.5px solid var(--error);color:var(--error);font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;flex:none;white-space:nowrap}
 .badge{position:absolute;top:2px;right:0;background:var(--primary);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:grid;place-items:center}
 .body{flex:1;overflow:hidden;padding:0 16px}
 .bottomnav{height:64px;flex:none;background:var(--surface);border-top:1px solid var(--outline);display:flex}
@@ -191,7 +192,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
   <div class="col"><div class="cap">S2. MenuScreen</div>
   <div class="phone">
     <div class="statusbar"><span>11:02</span><span>5G ▮▮▮</span></div>
-    <div class="appbar"><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--on-surface-variant)">Xin chào, Học sinh Demo</div>Thực đơn hôm nay</div><div class="ic">⎋</div></div>
+    <div class="appbar"><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--on-surface-variant)">Xin chào, Học sinh Demo</div>Thực đơn hôm nay</div><div class="logout">⎋ Đăng xuất</div></div>
     <div class="body">
       <div class="chips"><div class="chip on">Tất cả</div><div class="chip">Cơm</div><div class="chip">Bún/Mì</div><div class="chip">Ăn nhanh</div><div class="chip">Đồ uống</div></div>
       <div class="sec">Cơm</div>
@@ -285,7 +286,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
 <h2>3. App căng tin (CANTEEN) - tablet landscape, navigation rail: Đơn hàng · Thực đơn · Trả đồ</h2>
 <div class="col" style="margin-bottom:40px"><div class="cap">C1. OrdersScreen (kanban theo trạng thái, nhóm theo khung giờ bằng chip lọc)</div>
 <div class="tablet">
-  <div class="t-top">🍱 Căng tin · Quầy 1 <span style="flex:1"></span><span class="tag green" style="font-size:12px">● Đang nhận đơn</span><div class="ic">⎋</div></div>
+  <div class="t-top">🍱 Căng tin · Quầy 1 <span style="flex:1"></span><span class="tag green" style="font-size:12px">● Đang nhận đơn</span><div class="logout">⎋ Đăng xuất</div></div>
   <div class="t-main">
     <div class="rail"><div class="on"><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div></div>
     <div style="flex:1;display:flex;flex-direction:column;min-width:0">
@@ -305,7 +306,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     </div>
   </div>
 </div>
-<p class="note" style="max-width:900px">Ba cột: Đã nhận, Đang chuẩn bị, Sẵn sàng lấy (đơn COMPLETED/CANCELLED không hiện). Realtime. Thẻ đơn: mã 20sp/800 giãn chữ, tên khách, danh sách món, nút hành động đúng trạng thái kế tiếp. Chip trên cùng lọc theo khung giờ, kèm số đơn. Nút to (36dp trở lên) vì thao tác khi đang bận. Nếu số đơn nhiều thì cột cuộn dọc.</p></div>
+<p class="note" style="max-width:900px">Ba cột: Đã nhận, Đang chuẩn bị, Sẵn sàng lấy (đơn COMPLETED/CANCELLED không hiện). Realtime. Thẻ đơn: mã 20sp/800 giãn chữ, tên khách, danh sách món, nút hành động đúng trạng thái kế tiếp. Chip trên cùng lọc theo khung giờ, kèm số đơn. Nút to (36dp trở lên) vì thao tác khi đang bận. Nếu số đơn nhiều thì cột cuộn dọc.<br><b>Thanh trên cùng khi màn hẹp (&lt; 600dp, điện thoại):</b> tiêu đề một dòng, cắt bằng dấu … nếu dài; dòng trạng thái "● Đang nhận đơn" (chữ xanh 12sp, không dùng tag) nằm ngay dưới tiêu đề; nút "Đăng xuất" luôn nằm sát phải và không bao giờ bị đẩy ra ngoài màn hình hay bị ép xuống dòng. Tag trạng thái dạng viên thuốc chỉ dùng ở bản tablet.</p></div>
 
 <div class="row">
   <div class="col"><div class="cap">C2. MenuManageScreen (tablet: dùng chung layout rail, đây là phần nội dung)</div>

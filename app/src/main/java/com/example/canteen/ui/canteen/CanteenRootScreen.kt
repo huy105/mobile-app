@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,9 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.canteen.data.model.User
+import com.example.canteen.ui.common.components.LogoutButton
 import com.example.canteen.ui.common.components.RawTag
 import com.example.canteen.ui.common.theme.Background
 import com.example.canteen.ui.common.theme.OnPrimaryContainer
@@ -56,7 +59,11 @@ fun CanteenRootScreen(
 
         Scaffold(
             topBar = {
-                CanteenTopBar(userName = user.name, onLogout = onLogout)
+                CanteenTopBar(
+                    userName = user.name,
+                    isCompact = !isTabletLandscape,
+                    onLogout = onLogout
+                )
             },
             bottomBar = {
                 if (!isTabletLandscape) {
@@ -99,48 +106,52 @@ fun CanteenRootScreen(
 @Composable
 fun CanteenTopBar(
     userName: String = "",
+    isCompact: Boolean = false,
     onLogout: () -> Unit
 ) {
-    val title = if (userName.isNotBlank()) "🍱 Căng tin · $userName" else "🍱 Căng tin · Quầy 1"
+    val name = userName.ifBlank { "Căng tin Quầy 1" }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .heightIn(min = 64.dp)
             .background(Surface)
             .border(width = 1.dp, color = Outline)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = if (isCompact) 16.dp else 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = OnSurface
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        RawTag(
-            label = "● Đang nhận đơn",
-            backgroundColor = SuccessContainer,
-            textColor = Success,
-            modifier = Modifier.padding(end = 12.dp)
-        )
-
-        // Logout icon button
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .clickable { onLogout() },
-            contentAlignment = Alignment.Center
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "⎋",
-                fontSize = 20.sp,
-                color = OnSurface
+                text = "🍱 $name",
+                fontSize = if (isCompact) 18.sp else 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = OnSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
+            if (isCompact) {
+                // Status goes under the title on phones so it never squeezes the logout button
+                Text(
+                    text = "● Đang nhận đơn",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Success,
+                    maxLines = 1
+                )
+            }
         }
+
+        if (!isCompact) {
+            RawTag(
+                label = "● Đang nhận đơn",
+                backgroundColor = SuccessContainer,
+                textColor = Success,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        LogoutButton(onClick = onLogout)
     }
 }
 

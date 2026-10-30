@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.canteen.data.model.User
 import com.example.canteen.data.repository.AuthRepository
+import com.example.canteen.data.repository.SeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,8 @@ sealed interface LoginEvent {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val seedRepository: SeedRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -62,6 +64,8 @@ class LoginViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val result = authRepository.login(email, password)
             result.onSuccess { user ->
+                // Firestore rules require auth, so seed only after sign-in succeeded
+                seedRepository.seedIfEmpty()
                 _uiState.update { it.copy(isLoading = false, errorMessage = null) }
                 _eventFlow.emit(LoginEvent.LoginSuccess(user))
             }.onFailure {

@@ -1,3 +1,9 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.io.File
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -53,6 +59,25 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    applicationVariants.all {
+        val variantName = name
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+        outputs.all {
+            val output = this as? BaseVariantOutputImpl
+            output?.outputFileName = "app-${variantName}-${timestamp}.apk"
+        }
+        assembleProvider.configure {
+            doLast {
+                val apkDir = layout.buildDirectory.dir("outputs/apk/$variantName").get().asFile
+                val timestampedApk = File(apkDir, "app-${variantName}-${timestamp}.apk")
+                val defaultApk = File(apkDir, "app-${variantName}.apk")
+                if (timestampedApk.exists()) {
+                    timestampedApk.copyTo(defaultApk, overwrite = true)
+                }
+            }
         }
     }
 }

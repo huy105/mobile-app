@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
@@ -28,10 +30,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.canteen.data.model.User
+import com.example.canteen.ui.common.components.LogoutButton
 import com.example.canteen.ui.common.theme.Background
 import com.example.canteen.ui.common.theme.OnPrimary
 import com.example.canteen.ui.common.theme.OnPrimaryContainer
@@ -115,9 +119,9 @@ fun StudentTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .heightIn(min = 56.dp)
             .background(Background)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -126,45 +130,42 @@ fun StudentTopBar(
                     text = "Xin chào, $userName",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = OnSurfaceVariant
+                    color = OnSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "Thực đơn hôm nay",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = OnSurface
+                    color = OnSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             } else if (selectedTab == 1) {
                 Text(
                     text = "Giỏ hàng",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = OnSurface
+                    color = OnSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             } else {
                 Text(
                     text = "Đơn của tôi",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = OnSurface
+                    color = OnSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
 
-        // Logout icon button
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .clickable { onLogout() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "⎋",
-                fontSize = 20.sp,
-                color = OnSurface
-            )
-        }
+        Spacer(modifier = Modifier.width(8.dp))
+
+        LogoutButton(onClick = onLogout)
     }
 }
 

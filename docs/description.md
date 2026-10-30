@@ -87,7 +87,7 @@ Tất cả model là Kotlin `data class` có giá trị mặc định (để Fir
 ## 5. Màn hình và luồng
 
 ### Chung
-- **LoginScreen**: email + mật khẩu. Sau khi đăng nhập đọc `users/{uid}.role` rồi điều hướng: STUDENT vào luồng học sinh, CANTEEN vào luồng căng tin. Có nút đăng xuất ở mỗi luồng. Ghi nhớ phiên đăng nhập.
+- **LoginScreen**: email + mật khẩu. Sau khi đăng nhập đọc `users/{uid}.role` rồi điều hướng: STUDENT vào luồng học sinh, CANTEEN vào luồng căng tin. Có nút đăng xuất ở mỗi luồng: **nút dạng pill có chữ "Đăng xuất" kèm icon ⎋**, cao 40dp, nền `errorContainer`, viền 1.5dp và chữ màu `error`, đặt ở góc phải thanh trên cùng (component dùng chung `LogoutButton` trong `ui/common/components/`). Không dùng icon trơn không có chữ. Ghi nhớ phiên đăng nhập.
 
 ### Học sinh (STUDENT)
 1. **MenuScreen**: danh sách món của ngày hôm nay (lọc theo `date`), nhóm theo `category`. Món `inStock = false` làm mờ, gắn nhãn "Hết món", không thêm được. Nút thêm vào giỏ, badge số lượng trên icon giỏ.
@@ -118,6 +118,7 @@ Quy tắc ưu tiên:
 - Mockup HTML quyết định **giao diện**; phần mục 4 và mục 6 của file này quyết định **dữ liệu và nghiệp vụ**. Nếu mâu thuẫn về hành vi thì theo mục 6.
 - Emoji trong mockup chỉ là ảnh giữ chỗ. App thật dùng `imageUrl` qua Coil, có placeholder.
 - Chỉ dùng light theme, không làm dark mode.
+- **Thanh trên cùng của căng tin phải responsive**: màn hẹp (< 600dp) dùng tiêu đề 1 dòng (maxLines 1, ellipsis), dòng trạng thái "● Đang nhận đơn" đặt dưới tiêu đề, nút Đăng xuất luôn hiện đủ ở bên phải; không để chữ bị ép xuống dòng hay nút bị đẩy ra ngoài màn hình. Màn rộng (tablet) dùng tag trạng thái cạnh tiêu đề như mockup. Mọi thanh trên cùng khác cũng phải kiểm tra trên màn 360dp.
 - Cần tải font Plus Jakarta Sans bằng `androidx.compose.ui:ui-text-google-fonts` (hoặc để font file trong `res/font`); nếu lỗi thì fallback sang font mặc định, không để app crash.
 
 ## 6. Quy tắc nghiệp vụ
