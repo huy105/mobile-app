@@ -17,9 +17,30 @@
     <string name="nav_orders">Đơn của tôi</string>
 
     <!-- Canteen Navigation -->
+    <string name="nav_canteen_dashboard">Tổng quan</string>
     <string name="nav_canteen_orders">Đơn hàng</string>
     <string name="nav_canteen_menu">Thực đơn</string>
     <string name="nav_canteen_verify">Trả đồ</string>
+
+    <!-- Canteen Dashboard -->
+    <string name="dashboard_realtime_subtitle">Cập nhật theo thời gian thực</string>
+    <string name="dashboard_revenue">Doanh thu</string>
+    <string name="dashboard_revenue_sub">từ %1$d đơn đã hoàn thành</string>
+    <string name="dashboard_total_orders">Tổng số đơn</string>
+    <string name="dashboard_total_orders_sub">%1$d đang xử lý · %2$d đã hủy</string>
+    <string name="dashboard_items_sold">Suất đã bán</string>
+    <string name="dashboard_items_sold_sub">không tính đơn hủy</string>
+    <string name="dashboard_avg_prep_time">Chuẩn bị trung bình</string>
+    <string name="dashboard_avg_prep_time_sub">từ \"Bắt đầu làm\" đến \"Sẵn sàng\"</string>
+    <string name="dashboard_slots_title">Khung giờ nhận</string>
+    <string name="dashboard_low_stock_title">Món sắp hết suất</string>
+    <string name="dashboard_low_stock_empty">Chưa có món nào sắp hết</string>
+    <string name="slot_tag_full">Đầy</string>
+    <string name="slot_tag_almost_full">Gần đầy</string>
+    <string name="slot_tag_available">Còn chỗ</string>
+    <string name="dish_tag_sold_out_quota">Hết suất (%1$d/%2$d)</string>
+    <string name="dish_tag_remaining_quota">Còn %1$d suất</string>
+    <string name="dish_tag_disabled">Đã tắt (hết món)</string>
 
     <!-- Student Menu -->
     <string name="greeting_student">Xin chào, %1$s</string>

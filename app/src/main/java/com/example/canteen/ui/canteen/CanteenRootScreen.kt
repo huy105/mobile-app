@@ -52,7 +52,7 @@ fun CanteenRootScreen(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) } // 0: Đơn hàng, 1: Thực đơn, 2: Trả đồ
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) } // 0: Tổng quan, 1: Đơn hàng, 2: Thực đơn, 3: Trả đồ
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isTabletLandscape = maxWidth >= 600.dp
@@ -93,9 +93,13 @@ fun CanteenRootScreen(
                         .fillMaxHeight()
                 ) {
                     when (selectedTab) {
-                        0 -> CanteenOrdersScreen()
-                        1 -> CanteenMenuScreen()
-                        2 -> CanteenVerifyScreen()
+                        0 -> DashboardScreen(
+                            onNavigateToOrders = { selectedTab = 1 },
+                            onNavigateToMenu = { selectedTab = 2 }
+                        )
+                        1 -> CanteenOrdersScreen()
+                        2 -> CanteenMenuScreen()
+                        3 -> CanteenVerifyScreen()
                     }
                 }
             }
@@ -161,9 +165,10 @@ fun CanteenNavigationRail(
     onTabSelected: (Int) -> Unit
 ) {
     val items = listOf(
-        Triple(0, "📋", "Đơn hàng"),
-        Triple(1, "🍽", "Thực đơn"),
-        Triple(2, "✅", "Trả đồ")
+        Triple(0, "📊", "Tổng quan"),
+        Triple(1, "📋", "Đơn hàng"),
+        Triple(2, "🍽", "Thực đơn"),
+        Triple(3, "✅", "Trả đồ")
     )
 
     Column(
@@ -218,9 +223,10 @@ fun CanteenBottomBar(
             .border(width = 1.dp, color = Outline)
     ) {
         val items = listOf(
-            Triple(0, "📋", "Đơn hàng"),
-            Triple(1, "🍽", "Thực đơn"),
-            Triple(2, "✅", "Trả đồ")
+            Triple(0, "📊", "Tổng quan"),
+            Triple(1, "📋", "Đơn hàng"),
+            Triple(2, "🍽", "Thực đơn"),
+            Triple(3, "✅", "Trả đồ")
         )
 
         for ((index, icon, label) in items) {

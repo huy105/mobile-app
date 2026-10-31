@@ -11,10 +11,10 @@ Mục tiêu demo: chạy mượt luồng **Chọn món → Chọn giờ nhận �
 ### Có trong demo
 - 1 app Android, 2 vai trò: **STUDENT** (học sinh/sinh viên) và **CANTEEN** (căng tin).
 - Học sinh: xem menu theo ngày, giỏ hàng, chọn khung giờ nhận, xác nhận đặt (thanh toán giả lập), mã nhận đồ, theo dõi trạng thái đơn realtime, lịch sử đơn.
-- Căng tin: danh sách đơn theo khung giờ realtime, đổi trạng thái đơn, bật/tắt món hết hàng, nhập mã 4 số để hoàn thành đơn.
+- Căng tin: màn tổng quan số liệu hôm nay (doanh thu, số đơn, khung giờ, món sắp hết), danh sách đơn theo khung giờ realtime, đổi trạng thái đơn, bật/tắt món hết hàng, nhập mã 4 số để hoàn thành đơn.
 
 ### Không làm
-Thanh toán thật (VietQR/ví), Canteen Pass, tích điểm, Group Order, Combo Builder, bảng xếp hạng, "Hôm nay ăn gì", báo cáo doanh thu, admin portal, push notification, quét camera QR.
+Thanh toán thật (VietQR/ví), Canteen Pass, tích điểm, Group Order, Combo Builder, bảng xếp hạng, "Hôm nay ăn gì", báo cáo doanh thu nhiều ngày (app chỉ có tab Tổng quan của riêng hôm nay, báo cáo nhiều ngày để MCP lo), admin portal, push notification, quét camera QR.
 
 ## 2. Tech stack (bắt buộc)
 
@@ -68,7 +68,7 @@ com.example.canteen
 └─ ui/
    ├─ common/               (theme, components dùng chung, LoginScreen + LoginViewModel)
    ├─ student/              (MenuScreen, CartScreen, SlotPickerScreen, OrderStatusScreen, HistoryScreen + ViewModel)
-   └─ canteen/              (OrdersScreen, MenuManageScreen, VerifyCodeScreen + ViewModel)
+   └─ canteen/              (DashboardScreen, OrdersScreen, MenuManageScreen, VerifyCodeScreen + ViewModel)
 ```
 
 ## 4. Data model (Firestore)
@@ -104,11 +104,20 @@ Chi tiết các trường theo dõi, enum `CancelReason` và cách ghi từng tr
 Bottom navigation cho học sinh: Menu, Giỏ hàng, Đơn của tôi.
 
 ### Căng tin (CANTEEN)
+0. **DashboardScreen** (tab "Tổng quan", mở sẵn sau khi đăng nhập, chỉ đọc, realtime, chỉ dữ liệu **hôm nay**). Layout xem mục C5 trong `docs/design/design.html`. Không tạo collection hay trường mới, mọi số liệu tính từ `orders` hôm nay (`date` = ngày hiện tại), `menuItems` hôm nay và `timeSlotCounters` hôm nay mà app đã có. Công thức (đặt trong `DashboardViewModel`, hàm thuần dễ test):
+   - **Doanh thu** = tổng `total` của đơn `COMPLETED`; phụ đề "từ N đơn đã hoàn thành".
+   - **Tổng số đơn** = số đơn hôm nay ở mọi trạng thái; phụ đề "X đang xử lý (RECEIVED, PREPARING, READY) · Y đã hủy (CANCELLED)".
+   - **Suất đã bán** = tổng `quantity` của các món trong đơn không phải `CANCELLED`.
+   - **Chuẩn bị trung bình** = trung bình `readyAt - preparingAt` (phút, 1 chữ số thập phân, dấu phẩy) của đơn hôm nay có đủ hai mốc; không có đơn nào đủ thì hiện "—". Không bịa số.
+   - **Khung giờ nhận**: mỗi `timeSlots` một dòng `count/maxOrders` với `count` lấy từ `timeSlotCounters/{slotId}_{hôm nay}` (thiếu thì 0). Đầy khi `count >= maxOrders` (đỏ, tag "Đầy"), từ 80% trở lên là "Gần đầy" (cam), còn lại "Còn chỗ" (xanh).
+   - **Món sắp hết suất**: món hôm nay có `dailyQuota > 0` và còn lại (`dailyQuota - soldQty`) từ 0 đến 3 suất; hết suất ghi "Hết suất (X/X)", còn lại ghi "Còn N suất". Món `inStock = false` mà không phải do hết suất thì ghi "Đã tắt (hết món)". Sắp theo số suất còn lại tăng dần, tối đa 5 dòng; rỗng thì "Chưa có món nào sắp hết".
+   - Thiếu các trường của `docs/analytics-data-plan.md` (đơn cũ không có `preparingAt`/`readyAt`, món `dailyQuota = 0`) thì bỏ qua phần tính tương ứng, không crash.
+   - Bấm thẻ "Tổng số đơn" chuyển sang tab Đơn hàng; bấm khối "Món sắp hết suất" chuyển sang tab Thực đơn.
 1. **OrdersScreen**: đơn của hôm nay, realtime, hiển thị dạng 3 cột theo trạng thái (Đã nhận, Đang chuẩn bị, Sẵn sàng lấy) và có chip lọc theo khung giờ. Mỗi đơn hiện mã, tên khách, món. Nút chuyển trạng thái tiếp theo (RECEIVED → PREPARING → READY). Có thể hủy đơn.
 2. **MenuManageScreen**: danh sách món hôm nay, Switch bật/tắt `inStock`.
 3. **VerifyCodeScreen**: ô nhập mã 4 số. Khớp đơn `READY` của hôm nay thì chuyển `COMPLETED` và báo thành công; sai mã hoặc đơn chưa READY thì báo lỗi rõ ràng.
 
-Điều hướng cho căng tin: Đơn hàng, Thực đơn, Trả đồ (NavigationRail bên trái khi màn rộng, NavigationBar dưới cùng khi màn nhỏ).
+Điều hướng cho căng tin: Tổng quan, Đơn hàng, Thực đơn, Trả đồ (NavigationRail bên trái khi màn rộng, NavigationBar dưới cùng khi màn nhỏ).
 
 ## 5A. Thiết kế giao diện (bắt buộc làm theo)
 
@@ -116,7 +125,7 @@ Mockup đầy đủ nằm ở **`docs/design/design.html`** (mở bằng trình 
 
 Nội dung file mockup:
 1. **Design tokens**: bảng màu (primary cam `#EA580C`, nền ấm `#FFFBF5`, success/error/info), typography (Plus Jakarta Sans), shape (card 16dp, button 12dp, chip pill), spacing (4/8/12/16/24dp).
-2. **9 màn hình** có ghi chú hành vi bên dưới mỗi màn: S1 Login, S2 Menu, S3 Cart, S4 SlotPicker, S5 OrderStatus, S6 History (học sinh, phone 360x740dp) và C1 Orders, C2 MenuManage, C3 VerifyCode (căng tin, tablet landscape).
+2. **11 màn hình** có ghi chú hành vi bên dưới mỗi màn: S1 Login, S2 Menu, S3 Cart, S4 SlotPicker, S5 OrderStatus, S6 History (học sinh, phone 360x740dp) và C1 Orders, C2 MenuManage, C3 VerifyCode, C4 hộp thoại hủy đơn, C5 Dashboard (căng tin, tablet landscape).
 3. **Quy tắc chung cho Compose**: cấu trúc theme (`Color.kt`, `Type.kt`, `Shape.kt`, `Theme.kt`), component dùng chung, bản đồ màu `StatusTag`, trạng thái loading/rỗng/lỗi.
 
 Quy tắc ưu tiên:
@@ -153,7 +162,7 @@ Quy tắc ưu tiên:
 2. **Data layer**: model, các repository, module DI, `SeedRepository`.
 3. **Auth + điều hướng theo role**.
 4. **Luồng học sinh** (menu → giỏ → slot → trạng thái → lịch sử).
-5. **Luồng căng tin** (đơn → menu → trả đồ).
+5. **Luồng căng tin** (tổng quan → đơn → menu → trả đồ).
 6. **Polish**: loading/empty/error state, định dạng tiền, xử lý mất mạng cơ bản.
 
 ### Quy ước
@@ -201,7 +210,8 @@ Quy tắc ưu tiên:
 - [ ] Học sinh hủy đơn `RECEIVED` thì suất khung giờ được trả lại.
 - [ ] Có trạng thái loading, rỗng và lỗi ở các màn hình danh sách.
 - [ ] Mọi tiêu chí trong mục 7 của `docs/analytics-data-plan.md` đều đạt (dữ liệu phân tích, hộp thoại hủy, số suất mỗi món).
-- [ ] Giao diện của 9 màn hình khớp `docs/design/design.html` (màu, font, bo góc, bố cục); luồng căng tin dùng NavigationRail trên tablet.
+- [ ] Tab Tổng quan (C5) là tab đầu tiên, mở sẵn sau khi căng tin đăng nhập; bốn số liệu, khung giờ và món sắp hết khớp công thức ở mục 5 và cập nhật realtime khi có đơn mới.
+- [ ] Giao diện của 11 màn hình khớp `docs/design/design.html` (màu, font, bo góc, bố cục); luồng căng tin dùng NavigationRail trên tablet.
 
 ## 10. Hướng mở rộng (ngoài demo)
 
