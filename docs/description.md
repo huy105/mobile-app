@@ -12,9 +12,10 @@ Mục tiêu demo: chạy mượt luồng **Chọn món → Chọn giờ nhận �
 - 1 app Android, 2 vai trò: **STUDENT** (học sinh/sinh viên) và **CANTEEN** (căng tin).
 - Học sinh: xem menu theo ngày, giỏ hàng, chọn khung giờ nhận, xác nhận đặt (thanh toán giả lập), mã nhận đồ, theo dõi trạng thái đơn realtime, lịch sử đơn.
 - Căng tin: màn tổng quan số liệu hôm nay (doanh thu, số đơn, khung giờ, món sắp hết), danh sách đơn theo khung giờ realtime, đổi trạng thái đơn, bật/tắt món hết hàng, nhập mã 4 số để hoàn thành đơn.
+- **Tính năng v2** (chi tiết ở **`docs/features-v2-plan.md`**, làm theo giai đoạn): gợi ý món được đặt nhiều hôm nay (từ 10 suất), 20 món có ảnh thật, voucher và quy đổi điểm rèn luyện (giả lập) khi đặt đơn, tab **Nhà bếp** cho căng tin (số suất cần làm, doanh thu, chi phí, lãi), hoạt ảnh ở các bước chính.
 
 ### Không làm
-Thanh toán thật (VietQR/ví), Canteen Pass, tích điểm, Group Order, Combo Builder, bảng xếp hạng, "Hôm nay ăn gì", báo cáo doanh thu nhiều ngày (app chỉ có tab Tổng quan của riêng hôm nay, báo cáo nhiều ngày để MCP lo), admin portal, push notification, quét camera QR.
+Thanh toán thật (VietQR/ví), Canteen Pass, tích điểm tự động theo đơn (chỉ có điểm giả lập để tiêu), Group Order, Combo Builder, bảng xếp hạng, "Hôm nay ăn gì", báo cáo doanh thu nhiều ngày (app chỉ có tab Tổng quan của riêng hôm nay, báo cáo nhiều ngày để MCP lo), admin portal, push notification, quét camera QR. Cũng **không làm** (đã cân nhắc và bỏ cho bản demo): giá thay đổi theo số người đặt, giờ chốt đơn 9h và hạn thanh toán 30 phút, công thức nguyên liệu và tính khối lượng nguyên liệu, app nhà bếp riêng.
 
 ## 2. Tech stack (bắt buộc)
 
@@ -34,6 +35,7 @@ Thanh toán thật (VietQR/ví), Canteen Pass, tích điểm, Group Order, Combo
 mobile-app/                       (gốc repo, cũng là gốc project Android)
 ├─ docs/                          (tài liệu đầu vào, đã có sẵn, agent chỉ đọc, không sửa)
 │  ├─ description.md              (file spec này)
+│  ├─ features-v2-plan.md         (kế hoạch tính năng v2: voucher, điểm, tab Nhà bếp, hoạt ảnh)
 │  ├─ design/
 │  │  └─ design.html              (mockup giao diện, xem mục 5A)
 │  └─ data/
@@ -62,13 +64,13 @@ com.example.canteen
 ├─ MainActivity.kt
 ├─ di/                      (FirebaseModule, RepositoryModule)
 ├─ data/
-│  ├─ model/                (User, MenuItem, TimeSlot, Order, OrderItem, enums)
-│  └─ repository/           (AuthRepository, MenuRepository, SlotRepository, OrderRepository, SeedRepository)
+│  ├─ model/                (User, MenuItem, TimeSlot, Order, OrderItem, Voucher, enums)
+│  └─ repository/           (AuthRepository, MenuRepository, SlotRepository, OrderRepository, VoucherRepository, SeedRepository)
 ├─ navigation/              (NavGraph, Routes)
 └─ ui/
    ├─ common/               (theme, components dùng chung, LoginScreen + LoginViewModel)
    ├─ student/              (MenuScreen, CartScreen, SlotPickerScreen, OrderStatusScreen, HistoryScreen + ViewModel)
-   └─ canteen/              (DashboardScreen, OrdersScreen, MenuManageScreen, VerifyCodeScreen + ViewModel)
+   └─ canteen/              (DashboardScreen, OrdersScreen, MenuManageScreen, VerifyCodeScreen, KitchenScreen + ViewModel)
 ```
 
 ## 4. Data model (Firestore)
@@ -77,13 +79,15 @@ Tất cả model là Kotlin `data class` có giá trị mặc định (để Fir
 
 | Collection | Trường |
 |---|---|
-| `users/{uid}` | `name: String`, `email: String`, `role: "STUDENT" \| "CANTEEN"` |
-| `menuItems/{id}` | `name`, `description`, `price: Long` (VND), `imageUrl`, `category`, `inStock: Boolean`, `date: String` (yyyy-MM-dd), `dishKey`, `tags: List<String>`, `dailyQuota: Int` (0 = không giới hạn), `soldQty: Int` |
+| `users/{uid}` | `name: String`, `email: String`, `role: "STUDENT" \| "CANTEEN"`, `points: Int` (điểm rèn luyện giả lập, mặc định 0) |
+| `menuItems/{id}` | `name`, `description`, `price: Long` (VND), `imageUrl`, `category`, `inStock: Boolean`, `date: String` (yyyy-MM-dd), `dishKey`, `tags: List<String>`, `dailyQuota: Int` (0 = không giới hạn), `soldQty: Int`, `costPrice: Long` (giá vốn một suất, 0 = chưa có) |
 | `timeSlots/{id}` | `label` (vd "11:15 - 11:30"), `startMinute: Int`, `endMinute: Int`, `maxOrders: Int` |
 | `timeSlotCounters/{slotId}_{yyyy-MM-dd}` | `slotId`, `date`, `count: Int` (số đơn đã đặt của khung giờ trong ngày đó; sang ngày mới là document mới nên tự về 0) |
-| `orders/{id}` | `userId`, `userName`, `items: List<OrderItem>`, `slotId`, `slotLabel`, `pickupCode: String` (4 số), `status`, `total: Long`, `date: String`, `createdAt: Timestamp`, và các trường theo dõi: `updatedAt`, `preparingAt`, `readyAt`, `completedAt`, `cancelledAt` (Timestamp?), `cancelledBy` (STUDENT/CANTEEN), `cancelReason` (tên `CancelReason`) |
+| `orders/{id}` | `userId`, `userName`, `items: List<OrderItem>`, `slotId`, `slotLabel`, `pickupCode: String` (4 số), `status`, `subtotal: Long` (tạm tính), `discountAmount: Long`, `voucherCode: String`, `pointsUsed: Int`, `total: Long` (= `subtotal` − `discountAmount`), `date: String`, `createdAt: Timestamp`, và các trường theo dõi: `updatedAt`, `preparingAt`, `readyAt`, `completedAt`, `cancelledAt` (Timestamp?), `cancelledBy` (STUDENT/CANTEEN), `cancelReason` (tên `CancelReason`) |
 
 `OrderItem`: `menuItemId`, `name`, `price`, `quantity`, `category`, `dishKey`.
+
+Hai collection của voucher (v2): `vouchers/{CODE}` (`title`, `type` PERCENT hoặc AMOUNT, `value`, `minOrder`, `maxDiscount`, `validUntil`, `maxUses`, `usedCount`, `active`) và `voucherRedemptions/{CODE}_{uid}` (`code`, `userId`, `orderId`, `date`). Chi tiết và quy tắc ở `docs/features-v2-plan.md` mục 2 và 5.
 
 Chi tiết các trường theo dõi, enum `CancelReason` và cách ghi từng trường nằm trong **`docs/analytics-data-plan.md`** (bắt buộc làm theo).
 
@@ -95,8 +99,8 @@ Chi tiết các trường theo dõi, enum `CancelReason` và cách ghi từng tr
 - **LoginScreen**: email + mật khẩu. Sau khi đăng nhập đọc `users/{uid}.role` rồi điều hướng: STUDENT vào luồng học sinh, CANTEEN vào luồng căng tin. Có nút đăng xuất ở mỗi luồng: **nút dạng pill có chữ "Đăng xuất" kèm icon ⎋**, cao 40dp, nền `errorContainer`, viền 1.5dp và chữ màu `error`, đặt ở góc phải thanh trên cùng (component dùng chung `LogoutButton` trong `ui/common/components/`). Không dùng icon trơn không có chữ. Ghi nhớ phiên đăng nhập.
 
 ### Học sinh (STUDENT)
-1. **MenuScreen**: danh sách món của ngày hôm nay (lọc theo `date`), nhóm theo `category`. Món `inStock = false` làm mờ, gắn nhãn "Hết món", không thêm được. Nút thêm vào giỏ, badge số lượng trên icon giỏ.
-2. **CartScreen**: chỉnh số lượng, xóa món, hiện tổng tiền. Nút "Chọn giờ nhận".
+1. **MenuScreen**: (v2) ở đầu danh sách có hàng ngang "🔥 Gợi ý hôm nay" gồm tối đa 5 món `soldQty >= 10`, món đủ điều kiện có thêm tag "🔥 Được đặt nhiều" (ẩn hàng khi không có món nào). Danh sách món của ngày hôm nay (lọc theo `date`), nhóm theo `category`. Món `inStock = false` làm mờ, gắn nhãn "Hết món", không thêm được. Nút thêm vào giỏ, badge số lượng trên icon giỏ.
+2. **CartScreen**: chỉnh số lượng, xóa món, hiện tổng tiền. (v2) Có khối "Ưu đãi": nhập mã hoặc chọn chip voucher, công tắc dùng điểm rèn luyện (1 điểm = 500đ, tối đa 20% tạm tính); phần tóm tắt gồm Tạm tính, Voucher, Điểm, Tổng. Nút "Chọn giờ nhận".
 3. **SlotPickerScreen**: danh sách khung giờ, **chia hai nhóm tiêu đề "Buổi trưa" (`startMinute` < 840, tức trước 14:00) và "Chiều tối" (từ 14:00 trở đi)**, mỗi nhóm sắp theo giờ tăng dần, hiện số suất còn lại (`maxOrders` trừ `count` của `timeSlotCounters` hôm nay). Khung đã đầy thì disable. Khung đã qua giờ thì disable. Nút "Xác nhận đặt" (thanh toán giả lập, hiển thị dòng "Thanh toán tại quầy / giả lập").
 4. **OrderStatusScreen**: hiện mã nhận đồ 4 số cỡ lớn, khung giờ, danh sách món, trạng thái dạng stepper (Đã nhận → Đang chuẩn bị → Sẵn sàng → Hoàn thành), cập nhật **realtime** bằng Firestore snapshot listener. Nút "Hủy đơn" chỉ hiện khi `RECEIVED`.
 5. **HistoryScreen**: danh sách đơn của user, mới nhất trước, bấm vào xem chi tiết.
@@ -120,7 +124,9 @@ Bottom navigation cho học sinh: Menu, Giỏ hàng, Đơn của tôi.
 2. **MenuManageScreen**: danh sách món hôm nay, Switch bật/tắt `inStock`.
 3. **VerifyCodeScreen**: ô nhập mã 4 số. Khớp đơn `READY` của hôm nay thì chuyển `COMPLETED` và báo thành công; sai mã hoặc đơn chưa READY thì báo lỗi rõ ràng.
 
-Điều hướng cho căng tin: Tổng quan, Đơn hàng, Thực đơn, Trả đồ (NavigationRail bên trái khi màn rộng, NavigationBar dưới cùng khi màn nhỏ).
+4. **KitchenScreen** (tab "Nhà bếp", v2, chỉ đọc, realtime): theo ngày chọn (dùng lại thanh chọn ngày của Dashboard), bảng "Cần làm" (số suất, giá vốn, doanh thu từng món từ các đơn không hủy) và 4 thẻ: Doanh thu thuần, Chi phí, Lãi gộp, Giảm giá đã cho. Công thức ở `docs/features-v2-plan.md` mục 6.
+
+Điều hướng cho căng tin: Tổng quan, Đơn hàng, Thực đơn, Trả đồ, Nhà bếp (NavigationRail bên trái khi màn rộng, NavigationBar dưới cùng khi màn nhỏ).
 
 ## 5A. Thiết kế giao diện (bắt buộc làm theo)
 
@@ -128,13 +134,14 @@ Mockup đầy đủ nằm ở **`docs/design/design.html`** (mở bằng trình 
 
 Nội dung file mockup:
 1. **Design tokens**: bảng màu (primary cam `#EA580C`, nền ấm `#FFFBF5`, success/error/info), typography (Plus Jakarta Sans), shape (card 16dp, button 12dp, chip pill), spacing (4/8/12/16/24dp).
-2. **11 màn hình** có ghi chú hành vi bên dưới mỗi màn: S1 Login, S2 Menu, S3 Cart, S4 SlotPicker, S5 OrderStatus, S6 History (học sinh, phone 360x740dp) và C1 Orders, C2 MenuManage, C3 VerifyCode, C4 hộp thoại hủy đơn, C5 Dashboard (căng tin, tablet landscape).
+2. **12 màn hình** có ghi chú hành vi bên dưới mỗi màn: S1 Login, S2 Menu, S3 Cart, S4 SlotPicker, S5 OrderStatus, S6 History (học sinh, phone 360x740dp) và C1 Orders, C2 MenuManage, C3 VerifyCode, C4 hộp thoại hủy đơn, C5 Dashboard, C6 Kitchen (căng tin, tablet landscape). S2 và S3 có thêm phần v2 (dải gợi ý, khối ưu đãi).
 3. **Quy tắc chung cho Compose**: cấu trúc theme (`Color.kt`, `Type.kt`, `Shape.kt`, `Theme.kt`), component dùng chung, bản đồ màu `StatusTag`, trạng thái loading/rỗng/lỗi.
 
 Quy tắc ưu tiên:
 - Mockup HTML quyết định **giao diện**; phần mục 4 và mục 6 của file này quyết định **dữ liệu và nghiệp vụ**. Nếu mâu thuẫn về hành vi thì theo mục 6.
 - Emoji trong mockup chỉ là ảnh giữ chỗ. App thật dùng `imageUrl` qua Coil, có placeholder.
 - Chỉ dùng light theme, không làm dark mode.
+- **Mọi màn phải thử ở cả hai nhánh bề rộng** (< 600dp và ≥ 600dp). **Không đặt `verticalScroll` hoặc `LazyColumn` trong một vùng cuộn dọc khác** (gây crash "infinite maximum height"): layout điện thoại cuộn cả trang thì thẻ bên trong không tự cuộn; chỉ thẻ có chiều cao cố định (tablet) mới được cuộn riêng.
 - **Thanh trên cùng của căng tin phải responsive**: màn hẹp (< 600dp) dùng tiêu đề 1 dòng (maxLines 1, ellipsis), dòng trạng thái "● Đang nhận đơn" đặt dưới tiêu đề, nút Đăng xuất luôn hiện đủ ở bên phải; không để chữ bị ép xuống dòng hay nút bị đẩy ra ngoài màn hình. Màn rộng (tablet) dùng tag trạng thái cạnh tiêu đề như mockup. Mọi thanh trên cùng khác cũng phải kiểm tra trên màn 360dp.
 - Cần tải font Plus Jakarta Sans bằng `androidx.compose.ui:ui-text-google-fonts` (hoặc để font file trong `res/font`); nếu lỗi thì fallback sang font mặc định, không để app crash.
 
@@ -147,6 +154,7 @@ Quy tắc ưu tiên:
 - **Hết món sau khi đặt**: căng tin hủy đơn (status `CANCELLED`, lý do `SOLD_OUT`) và trả lại suất khung giờ.
 - **Hủy đơn**: học sinh chỉ hủy được khi `RECEIVED`; hủy thì trả lại suất khung giờ (giảm `count` của ngày đặt) và ghi `cancelledBy`, `cancelReason`, `cancelledAt`. Căng tin hủy phải chọn lý do trong hộp thoại.
 - **Đơn không đến lấy**: demo chỉ cần căng tin có thể hủy đơn `READY` thủ công.
+- **Voucher và điểm (v2)**: tính lại phía transaction khi đặt (không tin giá do client gửi). Mỗi học sinh dùng mỗi mã một lần; voucher giảm trước, điểm giảm sau (1 điểm = 500đ, tối đa 20% tạm tính); `total = subtotal − discountAmount` không âm. Hủy đơn (học sinh hoặc căng tin) thì hoàn lại mã dùng và cộng lại điểm. Chi tiết ở `docs/features-v2-plan.md` mục 5.
 - Giá hiển thị theo định dạng VND (vd "25.000đ").
 
 ## 7. Dữ liệu mẫu (seed)
@@ -154,7 +162,7 @@ Quy tắc ưu tiên:
 `SeedRepository.seedIfEmpty()` chạy một lần khi `menuItems` và `timeSlots` trống (có nút ẩn hoặc gọi khi khởi động bản debug):
 
 - **Tài khoản** (tạo thủ công trên Firebase Console, hoặc seed): `student@demo.com` / `123456` (STUDENT), `canteen@demo.com` / `123456` (CANTEEN). Document `users/{uid}` tương ứng.
-- **Nguồn dữ liệu**: đọc từ **`docs/data/seed-menu.json`** (copy vào `app/src/main/assets/seed-menu.json` để app đọc lúc chạy). Gồm 10 món (4 category: Cơm, Bún/Mì, Ăn nhanh, Đồ uống; giá 15.000 - 40.000đ; 1 món `inStock = false`) và **8 khung giờ** rộng 15 phút, `maxOrders = 10`: 4 khung **trưa** (11:15 đến 12:15) và 4 khung **chiều tối** (17:00 đến 18:00). Cả hai buổi dùng chung thực đơn của ngày. Hạn mức mỗi món là 14 suất (đồ uống 25) để đủ cho cả hai buổi. `timeSlots` đã có sẵn trong Firestore thì `seedIfEmpty()` không tự thêm: xóa collection `timeSlots` rồi đăng nhập lại để nạp đủ 8 khung.
+- **Nguồn dữ liệu**: đọc từ **`docs/data/seed-menu.json`** (copy vào `app/src/main/assets/seed-menu.json` để app đọc lúc chạy). Gồm **20 món** (4 category: Cơm, Bún/Mì, Ăn nhanh, Đồ uống; giá 15.000 - 40.000đ; 1 món `inStock = false`; mỗi món có `costPrice`, giá bán xấp xỉ `costPrice × 1,5`) và mảng `vouchers` (4 mã, xem `docs/features-v2-plan.md` mục 3) và **8 khung giờ** rộng 15 phút, `maxOrders = 10`: 4 khung **trưa** (11:15 đến 12:15) và 4 khung **chiều tối** (17:00 đến 18:00). Cả hai buổi dùng chung thực đơn của ngày. Hạn mức mỗi món là 14 suất (đồ uống 25) để đủ cho cả hai buổi. `timeSlots` đã có sẵn trong Firestore thì `seedIfEmpty()` không tự thêm: xóa collection `timeSlots` rồi đăng nhập lại để nạp đủ 8 khung.
 - `date` của món không có trong JSON: `SeedRepository` gán bằng ngày hiện tại (yyyy-MM-dd) khi seed.
 - **Ảnh món**: `imageUrl` trong JSON là ảnh công khai trên Wikimedia Commons, chỉ dùng cho demo. Hiển thị bằng Coil (`AsyncImage`) với `crossfade`, có placeholder. Nếu `imageUrl` trống hoặc tải lỗi thì hiện ô nền `primaryContainer` kèm icon theo category (Cơm 🍚, Bún/Mì 🍜, Ăn nhanh 🥖, Đồ uống 🥤). Cần quyền `INTERNET` trong manifest.
 
@@ -214,7 +222,8 @@ Quy tắc ưu tiên:
 - [ ] Có trạng thái loading, rỗng và lỗi ở các màn hình danh sách.
 - [ ] Mọi tiêu chí trong mục 7 của `docs/analytics-data-plan.md` đều đạt (dữ liệu phân tích, hộp thoại hủy, số suất mỗi món).
 - [ ] Tab Tổng quan (C5) là tab đầu tiên, mở sẵn sau khi căng tin đăng nhập; bốn số liệu, khung giờ và món sắp hết khớp công thức ở mục 5 và cập nhật realtime khi có đơn mới (khi xem hôm nay). Chọn được ngày đã qua (không chọn được ngày tương lai); số liệu đổi đúng theo ngày chọn, thử được với dữ liệu lịch sử giả.
-- [ ] Giao diện của 11 màn hình khớp `docs/design/design.html` (màu, font, bo góc, bố cục); luồng căng tin dùng NavigationRail trên tablet.
+- [ ] Mọi tiêu chí ở mục 9 của `docs/features-v2-plan.md` (gợi ý món, voucher và điểm, tab Nhà bếp, hoạt ảnh) đều đạt.
+- [ ] Giao diện của 12 màn hình khớp `docs/design/design.html` (màu, font, bo góc, bố cục); luồng căng tin dùng NavigationRail trên tablet.
 
 ## 10. Hướng mở rộng (ngoài demo)
 

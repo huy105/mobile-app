@@ -127,6 +127,18 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
 .pin{display:flex;gap:12px;justify-content:center;margin:16px 0}
 .pin div{width:56px;height:68px;border-radius:14px;border:2px solid var(--outline);background:var(--surface);display:grid;place-items:center;font-size:32px;font-weight:800}
 .pin div.f{border-color:var(--primary)}
+.hotrow{display:flex;gap:10px;overflow:hidden;padding:2px 0 12px}
+.hotcard{width:132px;flex:none;border-radius:16px;border:1px solid var(--outline);background:var(--surface);overflow:hidden}
+.hotcard .im{height:72px;background:var(--primary-container);display:grid;place-items:center;font-size:34px}
+.hotcard .bd{padding:8px 10px 10px}
+.hotcard b{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hotcard small{display:block;color:var(--on-surface-variant);font-size:11px;margin:2px 0 6px}
+.vchip{height:34px;padding:0 12px;border-radius:var(--r-chip);border:1.5px dashed var(--primary);background:var(--primary-container);color:var(--on-primary-container);font-size:12px;font-weight:700;display:flex;align-items:center;white-space:nowrap}
+.vchip.on{background:var(--primary);color:#fff;border-style:solid}
+.krow{display:grid;grid-template-columns:2.2fr .8fr 1fr 1fr;gap:8px;padding:6px 4px;border-bottom:1px solid var(--outline);font-size:13px;font-weight:600;align-items:center}
+.krow.h{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--on-surface-variant);font-weight:700}
+.krow.t{border-bottom:0;font-weight:800;border-top:2px solid var(--outline);margin-top:2px}
+.krow span:not(:first-child){text-align:right}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .stat{background:var(--surface);border:1px solid var(--outline);border-radius:var(--r-card);padding:14px 16px}
 .stat small{display:block;font-size:12px;font-weight:600;color:var(--on-surface-variant)}
@@ -212,9 +224,15 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     <div class="appbar"><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--on-surface-variant)">Xin chào, Học sinh Demo</div>Thực đơn hôm nay</div><div class="logout">⎋ Đăng xuất</div></div>
     <div class="body">
       <div class="chips"><div class="chip on">Tất cả</div><div class="chip">Cơm</div><div class="chip">Bún/Mì</div><div class="chip">Ăn nhanh</div><div class="chip">Đồ uống</div></div>
+      <div class="sec" style="margin-top:0">🔥 Gợi ý hôm nay</div>
+      <div class="hotrow">
+        <div class="hotcard"><div class="im">🥤</div><div class="bd"><b>Cà phê sữa đá</b><small>Đã đặt 14 suất</small><span class="price" style="font-size:13px">18.000đ</span></div></div>
+        <div class="hotcard"><div class="im">🍛</div><div class="bd"><b>Cơm sườn nướng</b><small>Đã đặt 12 suất</small><span class="price" style="font-size:13px">35.000đ</span></div></div>
+        <div class="hotcard"><div class="im">🍜</div><div class="bd"><b>Bún bò Huế</b><small>Đã đặt 10 suất</small><span class="price" style="font-size:13px">35.000đ</span></div></div>
+      </div>
       <div class="sec">Cơm</div>
-      <div class="card item"><div class="thumb">🍛</div><div class="t"><b>Cơm sườn nướng</b><small>Sườn, trứng, dưa leo</small><span class="price">35.000đ</span></div><div class="add">+</div></div>
-      <div class="card item"><div class="thumb">🍚</div><div class="t"><b>Cơm gà xối mỡ</b><small>Gà giòn, canh, rau</small><span class="price">32.000đ</span></div><div class="qty"><u>−</u>2<u class="p">+</u></div></div>
+      <div class="card item"><div class="thumb">🍛</div><div class="t"><b>Cơm sườn nướng</b><small>Sườn, trứng, dưa leo</small><span class="tag amber" style="margin-right:6px">🔥 Được đặt nhiều</span><span class="price">35.000đ</span></div><div class="add">+</div></div>
+      <div class="card item"><div class="thumb">🍚</div><div class="t"><b>Gà rán giòn</b><small>Gà giòn, canh, rau</small><span class="price">32.000đ</span></div><div class="qty"><u>−</u>2<u class="p">+</u></div></div>
       <div class="card item soldout"><div class="thumb">🍖</div><div class="t"><b>Cơm thịt kho</b><small><span class="tag red">Hết món</span></small><span class="price">30.000đ</span></div><div class="add">+</div></div>
       <div class="sec">Bún / Mì</div>
       <div class="card item"><div class="thumb">🍜</div><div class="t"><b>Bún bò</b><small>Giò, chả, rau sống</small><span class="price">35.000đ</span></div><div class="add">+</div></div>
@@ -222,7 +240,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     <div style="padding:0 16px 8px;flex:none"><div class="btn" style="justify-content:space-between;padding:0 20px"><span>🛒 2 món</span><span>64.000đ</span></div></div>
     <div class="bottomnav"><div class="on"><span>🍽</span>Menu</div><div><span>🛒</span>Giỏ hàng</div><div><span>🧾</span>Đơn của tôi</div></div>
   </div>
-  <p class="note">Hàng món: Card 12dp padding, ảnh 72dp bo 12dp. Món hết: alpha 0.45, tag "Hết món" đỏ, nút + xám và disable. Khi giỏ có món, hiện thanh tổng giữ cố định phía trên bottom nav (nút full-width, bấm đi tới Giỏ hàng). Chip lọc theo category cuộn ngang.</p></div>
+  <p class="note">Hàng món: Card 12dp padding, ảnh 72dp bo 12dp. Món hết: alpha 0.45, tag "Hết món" đỏ, nút + xám và disable. Khi giỏ có món, hiện thanh tổng giữ cố định phía trên bottom nav (nút full-width, bấm đi tới Giỏ hàng). Chip lọc theo category cuộn ngang.<br><b>Gợi ý hôm nay (v2):</b> hàng ngang cuộn ở đầu danh sách, tối đa 5 món <code>inStock</code> có <code>soldQty &gt;= 10</code>, sắp theo <code>soldQty</code> giảm dần; thẻ 132dp rộng, ảnh 72dp, dòng "Đã đặt N suất". Không có món nào đủ điều kiện thì ẩn cả hàng. Món đủ điều kiện cũng có tag "🔥 Được đặt nhiều" trong danh sách. Màn có 20 món; ảnh thật qua <code>imageUrl</code> (Coil).</p></div>
 
   <!-- Cart -->
   <div class="col"><div class="cap">S3. CartScreen</div>
@@ -230,18 +248,24 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     <div class="statusbar"><span>11:03</span><span>5G ▮▮▮</span></div>
     <div class="appbar">Giỏ hàng</div>
     <div class="body">
-      <div class="card item"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍚</div><div class="t"><b>Cơm gà xối mỡ</b><span class="price">32.000đ</span></div><div class="qty"><u>−</u>2<u class="p">+</u></div></div>
-      <div class="card item"><div class="thumb" style="width:56px;height:56px;font-size:26px">🥤</div><div class="t"><b>Trà tắc</b><span class="price">15.000đ</span></div><div class="qty"><u>−</u>1<u class="p">+</u></div></div>
-      <div class="card" style="margin-top:16px">
+      <div class="card item" style="margin-bottom:8px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍚</div><div class="t"><b>Gà rán giòn</b><span class="price">32.000đ</span></div><div class="qty"><u>−</u>2<u class="p">+</u></div></div>
+      <div class="card item" style="margin-bottom:8px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🥤</div><div class="t"><b>Trà tắc</b><span class="price">15.000đ</span></div><div class="qty"><u>−</u>1<u class="p">+</u></div></div>
+      <div class="card" style="margin-top:8px">
+        <div style="display:flex;gap:8px;margin-bottom:8px"><div class="field" style="flex:1;height:40px;margin:0;font-size:13px">🎟&nbsp; Nhập mã voucher</div><div class="btn sm">Áp dụng</div></div>
+        <div class="chips" style="padding:0 0 8px"><div class="vchip on">WELCOME10 · −7.900đ</div><div class="vchip">GIAM5K</div><div class="vchip">SINHVIEN</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="font-size:13px;font-weight:700">⭐ Dùng điểm rèn luyện<small style="display:block;font-weight:500;color:var(--on-surface-variant);font-size:11px;margin-top:2px">Còn 100 điểm · dùng 31 điểm, giảm 15.500đ</small></div><div class="switch on"></div></div>
+      </div>
+      <div class="card" style="margin-top:8px;padding:8px 12px">
         <div class="sum"><span>Tạm tính (3 món)</span><span>79.000đ</span></div>
-        <div class="sum"><span>Phí dịch vụ</span><span>0đ</span></div>
-        <div class="sum big"><span>Tổng</span><span style="color:var(--primary)">79.000đ</span></div>
+        <div class="sum" style="color:var(--success);padding:3px 0"><span>Voucher WELCOME10</span><span>−7.900đ</span></div>
+        <div class="sum" style="color:var(--success);padding:3px 0"><span>Điểm rèn luyện (31 điểm)</span><span>−15.500đ</span></div>
+        <div class="sum big"><span>Tổng</span><span style="color:var(--primary)">55.600đ</span></div>
       </div>
     </div>
     <div class="footer"><div class="btn">Chọn giờ nhận →</div></div>
     <div class="bottomnav"><div><span>🍽</span>Menu</div><div class="on"><span>🛒</span>Giỏ hàng</div><div><span>🧾</span>Đơn của tôi</div></div>
   </div>
-  <p class="note">Vuốt trái để xóa món (hoặc về 0 thì xóa). Giỏ rỗng: empty state "Giỏ hàng trống" + nút "Xem thực đơn".</p></div>
+  <p class="note">Vuốt trái để xóa món (hoặc về 0 thì xóa). Giỏ rỗng: empty state "Giỏ hàng trống" + nút "Xem thực đơn".<br><b>Khối Ưu đãi (v2):</b> ô nhập mã (đổi thành chữ hoa) + nút "Áp dụng"; hàng chip các voucher dùng được (viền đứt, chip đang áp tô cam); lỗi hiện dưới ô nhập, màu error: "Mã không tồn tại", "Mã đã hết hạn", "Đơn tối thiểu 30.000đ để dùng mã này", "Bạn đã dùng mã này rồi", "Mã đã hết lượt sử dụng". Công tắc điểm mặc định tắt; 1 điểm = 500đ, tối đa 20% tạm tính và không vượt phần còn lại sau voucher (ví dụ này: tạm tính 79.000đ, voucher 10% = 7.900đ, trần điểm = min(71.100đ, 15.800đ) = 15.800đ, dùng 31 điểm = 15.500đ). Công tắc bị vô hiệu kèm lý do khi không có điểm hoặc giảm bằng 0. Dòng giảm giá màu success. Dùng chung <code>PricingCalculator</code> với <code>createOrder</code>.</p></div>
 
   <!-- Slot -->
   <div class="col"><div class="cap">S4. SlotPickerScreen</div>
@@ -278,7 +302,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
       </div>
       <div class="card">
         <div class="sec" style="margin-top:0">Chi tiết đơn</div>
-        <div class="sum"><span>2 × Cơm gà xối mỡ</span><span>64.000đ</span></div>
+        <div class="sum"><span>2 × Gà rán giòn</span><span>64.000đ</span></div>
         <div class="sum"><span>1 × Trà tắc</span><span>15.000đ</span></div>
         <div class="sum big"><span>Tổng</span><span>79.000đ</span></div>
       </div>
@@ -304,17 +328,17 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
 
 </div>
 
-<h2>3. App căng tin (CANTEEN) - tablet landscape, navigation rail: Tổng quan · Đơn hàng · Thực đơn · Trả đồ</h2>
+<h2>3. App căng tin (CANTEEN) - tablet landscape, navigation rail: Tổng quan · Đơn hàng · Thực đơn · Trả đồ · Nhà bếp</h2>
 <div class="col" style="margin-bottom:40px"><div class="cap">C1. OrdersScreen (kanban theo trạng thái, nhóm theo khung giờ bằng chip lọc)</div>
 <div class="tablet">
   <div class="t-top">🍱 Căng tin · Quầy 1 <span style="flex:1"></span><span class="tag green" style="font-size:12px">● Đang nhận đơn</span><div class="logout">⎋ Đăng xuất</div></div>
   <div class="t-main">
-    <div class="rail"><div><span>📊</span>Tổng quan</div><div class="on"><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div></div>
+    <div class="rail"><div><span>📊</span>Tổng quan</div><div class="on"><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div><div><span>🧑‍🍳</span>Nhà bếp</div></div>
     <div style="flex:1;display:flex;flex-direction:column;min-width:0">
       <div class="chips" style="padding:12px 16px 0"><div class="chip on">Tất cả</div><div class="chip">11:15 - 11:30</div><div class="chip">11:30 - 11:45 (6)</div><div class="chip">11:45 - 12:00 (3)</div><div class="chip">12:00 - 12:15</div><div class="chip">17:00 - 17:15</div><div class="chip">…</div></div>
       <div class="cols">
         <div class="kcol"><h4>Đã nhận <span class="tag blue">2</span></h4>
-          <div class="order"><div class="h"><b>4821</b><span class="tag grey">11:30</span></div><p>Học sinh Demo<br>2× Cơm gà xối mỡ, 1× Trà tắc</p><div style="display:flex;gap:8px"><div class="btn sm">Bắt đầu làm</div><div class="btn sm danger">Hủy</div></div></div>
+          <div class="order"><div class="h"><b>4821</b><span class="tag grey">11:30</span></div><p>Học sinh Demo<br>2× Gà rán giòn, 1× Trà tắc</p><div style="display:flex;gap:8px"><div class="btn sm">Bắt đầu làm</div><div class="btn sm danger">Hủy</div></div></div>
           <div class="order"><div class="h"><b>7730</b><span class="tag grey">11:45</span></div><p>Nguyễn An<br>1× Bún bò</p><div style="display:flex;gap:8px"><div class="btn sm">Bắt đầu làm</div><div class="btn sm danger">Hủy</div></div></div>
         </div>
         <div class="kcol"><h4>Đang chuẩn bị <span class="tag amber">1</span></h4>
@@ -377,7 +401,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
 <div class="tablet">
   <div class="t-top">🍱 Căng tin · Quầy 1 <span style="flex:1"></span><span class="tag green" style="font-size:12px">● Đang nhận đơn</span><div class="logout">⎋ Đăng xuất</div></div>
   <div class="t-main">
-    <div class="rail"><div class="on"><span>📊</span>Tổng quan</div><div><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div></div>
+    <div class="rail"><div class="on"><span>📊</span>Tổng quan</div><div><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div><div><span>🧑‍🍳</span>Nhà bếp</div></div>
     <div style="flex:1;padding:16px 20px;min-width:0;display:flex;flex-direction:column;gap:14px;overflow:hidden">
       <div class="datebar"><div class="dnav">‹</div><div class="dchip">📅 Thứ Sáu, 31/10/2026 <span class="tag green">Hôm nay</span></div><div class="dnav off">›</div><div class="dnav tx">Hôm nay</div><span style="flex:1"></span><span style="font-size:12px;color:var(--on-surface-variant)">Cập nhật theo thời gian thực</span></div>
       <div class="stats">
@@ -411,6 +435,36 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
 </div>
 <p class="note" style="max-width:900px">Tab <b>đầu tiên</b> của rail và là màn mở sẵn sau khi căng tin đăng nhập. Chỉ đọc, không có nút thao tác (trừ khi xem hôm nay thì bấm thẻ "Tổng số đơn" mở Đơn hàng, vùng "Món sắp hết suất" mở Thực đơn; ngày khác thì chỉ để xem). <b>Chọn ngày (thanh trên cùng của nội dung):</b> nút ‹ lùi một ngày, nút › tiến một ngày (mờ và không bấm được khi đang ở hôm nay, không cho chọn ngày tương lai), bấm vào ô ngày giữa mở <code>DatePickerDialog</code> của Material 3 (chặn ngày sau hôm nay), nút chữ "Hôm nay" quay về hôm nay và chỉ hiện khi đang xem ngày khác (mockup vẽ sẵn để thấy kiểu dáng). Ô ngày hiện thứ, ngày/tháng/năm; tag xanh "Hôm nay" chỉ hiện khi đúng hôm nay, ngày khác thì tag xám "Ngày đã qua". Dòng "Cập nhật theo thời gian thực" chỉ hiện khi xem hôm nay. Mọi số liệu bên dưới đổi theo ngày đã chọn. Khi xem ngày đã qua: tiêu đề khối bên phải đổi thành "Món hết hoặc gần hết suất", các đơn đang xử lý thường là 0. Ngày không có dữ liệu: các số hiện 0 và có dòng chữ xám "Không có đơn nào trong ngày này" ngay dưới thanh chọn ngày.<br>Dữ liệu realtime khi xem <b>hôm nay</b>. Thẻ Doanh thu nền primary, chữ trắng; ba thẻ còn lại nền surface. Khối Khung giờ nhận chia hai nhóm "Buổi trưa" và "Chiều tối" (cùng quy tắc nhóm với S4, trước 14:00 là trưa), khối cuộn dọc nếu thiếu chỗ. Thanh khung giờ: đỏ khi đầy (count &gt;= maxOrders), cam nhạt khi từ 80% trở lên (tag "Gần đầy"), còn lại primary. Danh sách món sắp hết sắp theo số suất còn lại tăng dần, tối đa 5 dòng.<br><b>Màn hẹp (&lt; 600dp, điện thoại):</b> thanh chọn ngày vẫn một hàng (‹, ô ngày co giãn, ›, nút "Hôm nay" thu thành icon ↺ khi thiếu chỗ); tab nằm trong NavigationBar dưới cùng; bốn thẻ số liệu xếp lưới 2x2, hai khối khung giờ và món sắp hết xếp dọc, toàn bộ cuộn dọc. Trạng thái rỗng (chưa có đơn nào hôm nay): các số hiện 0, "Chuẩn bị trung bình" hiện "—", mục Khung giờ vẫn hiện đủ thanh 0/maxOrders, mục món sắp hết hiện "Chưa có món nào sắp hết".</p></div>
 
+<div class="col" style="margin-bottom:40px"><div class="cap">C6. KitchenScreen (tab Nhà bếp, v2)</div>
+<div class="tablet">
+  <div class="t-top">🍱 Căng tin · Quầy 1 <span style="flex:1"></span><span class="tag green" style="font-size:12px">● Đang nhận đơn</span><div class="logout">⎋ Đăng xuất</div></div>
+  <div class="t-main">
+    <div class="rail"><div><span>📊</span>Tổng quan</div><div><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div><div class="on"><span>🧑‍🍳</span>Nhà bếp</div></div>
+    <div style="flex:1;padding:14px 20px;min-width:0;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+      <div class="datebar"><div class="dnav">‹</div><div class="dchip">📅 Thứ Sáu, 31/10/2026 <span class="tag green">Hôm nay</span></div><div class="dnav off">›</div><div class="dnav tx">Hôm nay</div><span style="flex:1"></span><span style="font-size:12px;color:var(--on-surface-variant)">Tính từ đơn không bị hủy</span></div>
+      <div class="stats">
+        <div class="stat hl"><small>Doanh thu thuần</small><b>1.646.000đ</b><span>tính cả đơn chưa giao</span></div>
+        <div class="stat"><small>Chi phí</small><b>1.202.500đ</b><span>giá vốn × số suất</span></div>
+        <div class="stat"><small>Lãi gộp</small><b>443.500đ</b><span>doanh thu thuần − chi phí</span></div>
+        <div class="stat"><small>Giảm giá đã cho</small><b>152.000đ</b><span>voucher + điểm</span></div>
+      </div>
+      <div class="card" style="flex:1;min-height:0;padding:12px 16px;overflow:hidden">
+        <div class="sec" style="margin:0 0 4px">Cần làm hôm nay</div>
+        <div class="krow h"><span>Món</span><span>Số suất</span><span>Giá vốn</span><span>Doanh thu</span></div>
+        <div class="krow"><span>Cà phê sữa đá</span><span>14</span><span>168.000đ</span><span>252.000đ</span></div>
+        <div class="krow"><span>Cơm sườn nướng</span><span>12</span><span>282.000đ</span><span>420.000đ</span></div>
+        <div class="krow"><span>Bún bò Huế</span><span>9</span><span>211.500đ</span><span>315.000đ</span></div>
+        <div class="krow"><span>Gà rán giòn</span><span>8</span><span>172.000đ</span><span>256.000đ</span></div>
+        <div class="krow"><span>Trà chanh</span><span>7</span><span>70.000đ</span><span>105.000đ</span></div>
+        <div class="krow"><span>Phở bò</span><span>6</span><span>159.000đ</span><span>240.000đ</span></div>
+        <div class="krow" style="color:var(--on-surface-variant);font-weight:500"><span>Các món khác (4 món)</span><span>10</span><span>140.000đ</span><span>210.000đ</span></div>
+        <div class="krow t"><span>Tổng</span><span>66</span><span>1.202.500đ</span><span>1.798.000đ</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note" style="max-width:900px">Tab thứ 5 của căng tin, <b>chỉ đọc</b>, realtime. Thanh chọn ngày dùng lại component của Dashboard (‹ › · ô ngày · "Hôm nay", chặn ngày tương lai). Số liệu của ngày chọn, tính từ các đơn <b>không bị hủy</b>: bảng "Cần làm" nhóm theo món (số suất = tổng <code>quantity</code>, giá vốn = <code>costPrice × suất</code>, doanh thu = <code>price × suất</code>), sắp giảm dần theo số suất, dòng cuối là tổng. <b>Doanh thu thuần</b> = tổng doanh thu các món − tổng <code>discountAmount</code> (ở đây 1.798.000đ − 152.000đ = 1.646.000đ); <b>Chi phí</b> = tổng giá vốn; <b>Lãi gộp</b> = Doanh thu thuần − Chi phí. Thẻ Doanh thu nền primary. Số này khác tab Tổng quan (chỉ tính đơn đã hoàn thành) vì bếp phải làm cả đơn chưa giao; thẻ có ghi chú "tính cả đơn chưa giao". Món thiếu <code>costPrice</code> tính chi phí 0 và có dòng cảnh báo vàng "N món chưa có giá vốn" ngay dưới thanh ngày. Ngày không có đơn: các số về 0 và bảng hiện "Chưa có đơn nào trong ngày này".<br><b>Màn hẹp (&lt; 600dp, điện thoại):</b> tab nằm trong NavigationBar dưới cùng (5 mục), 4 thẻ số xếp lưới 2x2, bảng thành danh sách thẻ và <b>cả trang cuộn dọc</b> (không đặt vùng cuộn trong vùng cuộn).</p></div>
+
 <h2>4. Quy tắc chung cho Compose</h2>
 <div class="flow">
   • Tạo <code>ui/common/theme/</code> gồm <code>Color.kt</code> (token ở trên), <code>Type.kt</code> (Plus Jakarta Sans), <code>Shape.kt</code>, <code>Theme.kt</code> (<code>lightColorScheme</code> map từ token; luôn dùng light).<br>
@@ -419,7 +473,9 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
   • Mọi danh sách có 3 trạng thái: loading (CircularProgressIndicator giữa màn hình), rỗng (EmptyState), lỗi (Snackbar hoặc thẻ lỗi kèm nút Thử lại).<br>
   • Animation: chuyển bước stepper và đổi màu tag bằng <code>animateColorAsState</code> (200ms), không dùng animation nặng.<br>
   • Phát hiện thiết bị: vai trò CANTEEN dùng <code>NavigationRail</code> + layout rộng khi width &gt;= 600dp, thu về <code>NavigationBar</code> nếu màn nhỏ. Vai trò STUDENT luôn dùng <code>NavigationBar</code> dưới cùng.<br>
-  • Tiền VND định dạng <code>"%,d".replace(',', '.') + "đ"</code>. Chuỗi hiển thị lấy từ <code>strings.xml</code> (tiếng Việt).
+  • Tiền VND định dạng <code>"%,d".replace(',', '.') + "đ"</code>. Chuỗi hiển thị lấy từ <code>strings.xml</code> (tiếng Việt).<br>
+  • <b>Hoạt ảnh (v2):</b> 200 đến 400ms, chỉ dùng <code>androidx.compose.animation</code>; danh sách món hiện lần lượt, nút + nảy, badge giỏ và số tiền đếm mượt, stepper tô dần, chuyển màn trượt + mờ 300ms. Chỉ tag 🔥 và bước hiện tại của stepper được lặp. Chi tiết và lưu ý phiên bản API ở <code>docs/features-v2-plan.md</code> mục 7.<br>
+  • <b>Hai nhánh bề rộng:</b> mọi màn thử ở &lt; 600dp và ≥ 600dp; không đặt vùng cuộn dọc trong vùng cuộn dọc khác.
 </div>
 
 </body>

@@ -7,6 +7,7 @@ Sinh khoảng 4 tuần đơn hàng giả (24 ngày học, khoảng 1.000 đơn, 
 - `menuItems`: menu của từng ngày cũ với `dailyQuota`, `soldQty`, `inStock` cuối ngày (id dạng `hist_<ngày>_<dishKey>`).
 - `timeSlotCounters`: số đơn không bị hủy của từng khung giờ mỗi ngày, khớp cách app đếm.
 - Có sẵn xu hướng để báo cáo có chuyện để kể: khung 11:30-11:45 hay đầy, doanh thu tăng dần theo tuần, thứ Sáu bún/phở bán chạy, Xôi và Mì xào ế, một ngày bếp chậm (chuẩn bị khoảng 18 phút) và một ngày nhiều đơn không đến lấy.
+- Khoảng 18% đơn có ưu đãi (voucher `WELCOME10`, `GIAM5K`, `SINHVIEN`; một số đơn dùng thêm điểm rèn luyện), có `subtotal`, `discountAmount`, `voucherCode`, `pointsUsed`; menu mỗi ngày có `costPrice` để tính chi phí và lãi gộp.
 - Mọi document có `demoHistory: true`, id bắt đầu bằng `hist_`. Học sinh là tên giả (`demo_student_01` đến `30`). Không đụng tới dữ liệu hôm nay và các đơn thật của bạn.
 
 Giữ ý: số đơn mỗi khung giờ bị giới hạn bởi `maxOrders` (mặc định 10) và có 8 khung giờ (4 trưa, 4 chiều tối) nên một ngày tối đa 80 đơn; khung chiều tối vắng hơn khung trưa. Hạn mức trong `docs/data/seed-menu.json` đã đặt 14 suất món ăn và 25 suất đồ uống cho khớp.

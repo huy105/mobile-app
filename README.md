@@ -15,6 +15,7 @@ app/                   Ứng dụng Android (module duy nhất)
 docs/
   description.md       Đặc tả chính của app (đọc file này đầu tiên)
   analytics-data-plan.md  Các trường dữ liệu phân tích cần bổ sung
+  features-v2-plan.md     Kế hoạch tính năng v2: voucher, điểm, tab Nhà bếp, hoạt ảnh
   mcp-server-design.md    Thiết kế MCP server báo cáo
   design/design.html      Mockup giao diện (mở bằng trình duyệt)
   data/                   seed-menu.json (thực đơn), seed-history.json (lịch sử giả)

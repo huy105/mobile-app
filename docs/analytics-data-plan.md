@@ -175,3 +175,27 @@ MCP server chỉ-đọc (Firebase Admin SDK, chạy local, service account key n
 | Hỏi đáp thực đơn | `menuItems` hôm nay có `inStock`, `remainingQty != 0`, lọc theo `tags` và `price` |
 
 Công cụ dự kiến: `get_sales_summary`, `get_top_items`, `get_orders_by_slot`, `get_cancellations`, `get_prep_time_stats`, `get_unsold_items`, `forecast_tomorrow`, `list_menu`. Che `userName`/email trong kết quả. Đặt tại `tools/mcp-firestore/`.
+
+## 9. Trường bổ sung của v2 (voucher, điểm, giá vốn)
+
+Các trường dưới đây thêm bởi kế hoạch v2 (`docs/features-v2-plan.md`, mục 2). Chúng không thay đổi các công thức ở mục 8, chỉ thêm chỉ số về giảm giá và lãi gộp.
+
+| Trường | Ở đâu | Dùng để tính |
+|---|---|---|
+| `subtotal` | `orders` | tạm tính trước giảm giá (đơn cũ thiếu thì coi bằng `total`) |
+| `discountAmount` | `orders` | tổng giảm giá (voucher + điểm); `total = subtotal − discountAmount` |
+| `voucherCode` | `orders` | thống kê mã nào được dùng, giảm bao nhiêu |
+| `pointsUsed` | `orders` | điểm rèn luyện đã dùng (1 điểm = 500đ) |
+| `costPrice` | `menuItems` | giá vốn một suất, dùng cho chi phí và lãi gộp |
+
+Công thức mới cho MCP (`docs/mcp-server-design.md`, view `v_pnl_daily`), tính trên các đơn **không bị `CANCELLED`**:
+
+| Chỉ số | Công thức |
+|---|---|
+| Doanh thu gộp | tổng `price × quantity` của các dòng món |
+| Giảm giá | tổng `discountAmount` |
+| Doanh thu thuần | doanh thu gộp − giảm giá |
+| Chi phí | tổng `costPrice × quantity` (món chưa có `costPrice` tính 0, phải ghi chú) |
+| Lãi gộp | doanh thu thuần − chi phí |
+
+Lưu ý: `orders.total` đã là số tiền sau giảm giá, nên doanh thu ở mục 8 (đơn `COMPLETED`) là **doanh thu thuần**. Số "Doanh thu thuần" ở tab Nhà bếp lớn hơn vì tính cả đơn chưa giao.

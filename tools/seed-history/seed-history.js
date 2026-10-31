@@ -61,6 +61,9 @@ const BASE_WEIGHT = {
   'com-suon-nuong': 1.0, 'com-thit-kho-trung': 0.8, 'ga-ran-gion': 0.9, 'bun-bo-hue': 0.8,
   'pho-bo': 0.7, 'mi-xao': 0.2, 'banh-mi-thap-cam': 0.6, 'xoi-thap-cam': 0.3,
   'ca-phe-sua-da': 1.0, 'tra-chanh': 0.9,
+  'com-ga-tam-ky': 0.9, 'com-chien-duong-chau': 0.6, 'hu-tieu-nam-vang': 0.6, 'bun-rieu-cua': 0.5,
+  'bun-cha': 0.7, 'banh-cuon': 0.4, 'goi-cuon-chay': 0.45, 'cha-gio': 0.5,
+  'nuoc-cam-ep': 0.6, 'sinh-to-bo': 0.5,
 };
 const WEEKDAY_BOOST = {
   1: { 'com-suon-nuong': 1.3 },
@@ -107,7 +110,11 @@ function historyDays() {
 }
 
 // ---------- Sinh dữ liệu ----------
+// Hàm băm cố định theo chuỗi -> số 0..1, KHÔNG dùng bộ sinh ngẫu nhiên chính để không làm đổi dãy số của dữ liệu cũ
+const frac = (str) => { let h = 7; for (const ch of str) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return (h % 1000) / 1000; };
+
 function generate(slots) {
+  const redeemed = new Set(); // mỗi học sinh dùng mỗi mã voucher một lần
   const days = historyDays();
   const slowIdx = days.length - 9;   // ngày bếp chậm, nhiều đơn quá tải
   const spikeIdx = days.length - 4;  // ngày nhiều đơn không đến lấy
@@ -165,6 +172,23 @@ function generate(slots) {
           date: day.date, createdAt, demoHistory: true,
         };
 
+        // Ưu đãi (v2): voucher và điểm rèn luyện, tính theo quy tắc ở docs/features-v2-plan.md mục 5.1
+        const subtotal = order.total;
+        const f = frac(order.id);
+        let voucherCode = '', discount = 0, pointsUsed = 0;
+        if (f < 0.08 && subtotal >= 30000) { voucherCode = 'WELCOME10'; discount = Math.min(Math.floor(subtotal * 0.1), 15000); }
+        else if (f < 0.14 && subtotal >= 20000) { voucherCode = 'GIAM5K'; discount = 5000; }
+        else if (f < 0.18) { voucherCode = 'SINHVIEN'; discount = 3000; }
+        if (voucherCode && redeemed.has(`${student.id}|${voucherCode}`)) { voucherCode = ''; discount = 0; }
+        if (voucherCode) redeemed.add(`${student.id}|${voucherCode}`);
+        if (frac(order.id + 'p') < 0.06) {
+          const cap = Math.min(subtotal - discount, Math.floor(subtotal * 0.2));
+          pointsUsed = Math.min(20, Math.floor(cap / 500));
+          discount += pointsUsed * 500;
+        }
+        order.subtotal = subtotal; order.discountAmount = discount; order.voucherCode = voucherCode;
+        order.pointsUsed = pointsUsed; order.total = subtotal - discount;
+
         const cancelP = slow ? 0.12 : 0.07;
         if (rnd() < cancelP) {
           const reason = pickWeighted(
@@ -208,6 +232,7 @@ function generate(slots) {
       out.menuItems.push({
         id: `hist_${day.date}_${d.dishKey}`,
         name: d.name, description: d.description, price: d.price, imageUrl: d.imageUrl,
+        costPrice: d.costPrice || 0,
         category: d.category, date: day.date, dishKey: d.dishKey, tags: d.tags,
         dailyQuota: quota, soldQty: sold[d.dishKey],
         inStock: sold[d.dishKey] < quota, demoHistory: true,
