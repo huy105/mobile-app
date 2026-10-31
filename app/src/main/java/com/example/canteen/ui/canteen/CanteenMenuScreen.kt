@@ -2,6 +2,7 @@ package com.example.canteen.ui.canteen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,16 +19,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -36,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +77,7 @@ fun CanteenMenuScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var itemToEditQuota by remember { mutableStateOf<MenuItem?>(null) }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { error ->
@@ -135,12 +144,64 @@ fun CanteenMenuScreen(
                         items(uiState.items, key = { it.id }) { item ->
                             CanteenMenuItemRow(
                                 item = item,
-                                onToggle = { viewModel.toggleStock(item) }
+                                onToggle = { viewModel.toggleStock(item) },
+                                onEditQuota = { itemToEditQuota = item }
                             )
                         }
                     }
                 }
             }
+        }
+
+        // Quota edit dialog
+        itemToEditQuota?.let { item ->
+            var quotaInput by remember(item.id) {
+                mutableStateOf(if (item.dailyQuota > 0) item.dailyQuota.toString() else "0")
+            }
+
+            AlertDialog(
+                onDismissRequest = { itemToEditQuota = null },
+                title = {
+                    Text(
+                        text = "Sửa số suất: ${item.name}",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = quotaInput,
+                            onValueChange = { quotaInput = it.filter { ch -> ch.isDigit() } },
+                            label = { Text("Số suất mỗi ngày") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Nhập 0 nếu không giới hạn số suất.",
+                            fontSize = 12.sp,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val quota = quotaInput.toIntOrNull() ?: 0
+                            viewModel.updateQuota(item.id, quota)
+                            itemToEditQuota = null
+                        }
+                    ) {
+                        Text("Lưu", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { itemToEditQuota = null }) {
+                        Text("Hủy")
+                    }
+                }
+            )
         }
 
         SnackbarHost(
@@ -153,7 +214,8 @@ fun CanteenMenuScreen(
 @Composable
 private fun CanteenMenuItemRow(
     item: MenuItem,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    onEditQuota: () -> Unit
 ) {
     val thumbAlpha = if (item.inStock) 1f else 0.5f
     val textAlpha = if (item.inStock) 1f else 0.6f
@@ -238,6 +300,27 @@ private fun CanteenMenuItemRow(
                     text = item.price.formatVnd(),
                     fontSize = 12.sp,
                     color = OnSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                val quotaText = if (item.dailyQuota > 0) "Đã bán ${item.soldQty}/${item.dailyQuota} suất" else "Không giới hạn"
+                Text(
+                    text = quotaText,
+                    fontSize = 12.sp,
+                    color = OnSurfaceVariant
+                )
+                Text(
+                    text = "· Sửa suất",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Primary,
+                    modifier = Modifier.clickable { onEditQuota() }
                 )
             }
         }

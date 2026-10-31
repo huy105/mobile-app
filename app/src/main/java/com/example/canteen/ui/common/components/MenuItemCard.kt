@@ -32,11 +32,13 @@ import coil.request.ImageRequest
 import com.example.canteen.ui.common.theme.Error
 import com.example.canteen.ui.common.theme.ErrorContainer
 import com.example.canteen.ui.common.theme.OnPrimary
+import com.example.canteen.ui.common.theme.OnSecondaryContainer
 import com.example.canteen.ui.common.theme.OnSurface
 import com.example.canteen.ui.common.theme.OnSurfaceVariant
 import com.example.canteen.ui.common.theme.Outline
 import com.example.canteen.ui.common.theme.Primary
 import com.example.canteen.ui.common.theme.PrimaryContainer
+import com.example.canteen.ui.common.theme.SecondaryContainer
 import com.example.canteen.ui.common.theme.ShapeCard
 import com.example.canteen.ui.common.theme.ShapeThumbnail
 import com.example.canteen.ui.common.theme.Surface
@@ -56,9 +58,11 @@ fun MenuItemCard(
     onIncrease: () -> Unit,
     onDecrease: () -> Unit,
     modifier: Modifier = Modifier,
-    thumbnailSize: Dp = 72.dp
+    thumbnailSize: Dp = 72.dp,
+    remainingQty: Int? = null
 ) {
-    val cardAlpha = if (inStock) 1f else 0.45f
+    val effectiveInStock = inStock && (remainingQty == null || remainingQty > 0)
+    val cardAlpha = if (effectiveInStock) 1f else 0.45f
 
     Row(
         modifier = modifier
@@ -128,22 +132,32 @@ fun MenuItemCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            if (!inStock) {
+            if (!effectiveInStock) {
                 Spacer(modifier = Modifier.height(2.dp))
                 RawTag(
                     label = "Hết món",
                     backgroundColor = ErrorContainer,
                     textColor = Error
                 )
-            } else if (description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = description,
-                    fontSize = 12.sp,
-                    color = OnSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            } else {
+                if (remainingQty != null && remainingQty in 1..5) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    RawTag(
+                        label = "Còn $remainingQty suất",
+                        backgroundColor = SecondaryContainer,
+                        textColor = OnSecondaryContainer
+                    )
+                }
+                if (description.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = description,
+                        fontSize = 12.sp,
+                        color = OnSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -156,7 +170,7 @@ fun MenuItemCard(
         }
 
         // Action button or Stepper
-        if (!inStock) {
+        if (!effectiveInStock) {
             Box(
                 modifier = Modifier
                     .size(36.dp)

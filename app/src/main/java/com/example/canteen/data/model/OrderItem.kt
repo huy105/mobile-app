@@ -4,9 +4,10 @@ data class OrderItem(
     val menuItemId: String = "",
     val name: String = "",
     val price: Long = 0L,
-    val quantity: Int = 1
+    val quantity: Int = 1,
+    val category: String = "",
+    val dishKey: String = ""
 ) {
     val subtotal: Long
         get() = price * quantity
 }
-

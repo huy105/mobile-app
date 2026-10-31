@@ -25,6 +25,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.canteen.data.model.CancelReason
 import com.example.canteen.data.model.Order
 import com.example.canteen.data.model.OrderStatus
 import com.example.canteen.ui.common.components.LoadingBox
@@ -78,7 +81,6 @@ fun CanteenOrdersScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var orderToCancel by remember { mutableStateOf<Order?>(null) }
-    var isNoShowCancel by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { error ->
@@ -121,10 +123,7 @@ fun CanteenOrdersScreen(
                                 tagTextColor = Info,
                                 orders = uiState.receivedOrders,
                                 onAdvance = { viewModel.advanceStatus(it) },
-                                onCancel = {
-                                    orderToCancel = it
-                                    isNoShowCancel = false
-                                },
+                                onCancel = { orderToCancel = it },
                                 modifier = Modifier.weight(1f).fillMaxHeight()
                             )
 
@@ -135,10 +134,7 @@ fun CanteenOrdersScreen(
                                 tagTextColor = OnSecondaryContainer,
                                 orders = uiState.preparingOrders,
                                 onAdvance = { viewModel.advanceStatus(it) },
-                                onCancel = {
-                                    orderToCancel = it
-                                    isNoShowCancel = false
-                                },
+                                onCancel = { orderToCancel = it },
                                 modifier = Modifier.weight(1f).fillMaxHeight()
                             )
 
@@ -149,10 +145,7 @@ fun CanteenOrdersScreen(
                                 tagTextColor = Success,
                                 orders = uiState.readyOrders,
                                 onAdvance = { viewModel.advanceStatus(it) },
-                                onCancel = {
-                                    orderToCancel = it
-                                    isNoShowCancel = true
-                                },
+                                onCancel = { orderToCancel = it },
                                 modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                         }
@@ -171,10 +164,7 @@ fun CanteenOrdersScreen(
                                 tagTextColor = Info,
                                 orders = uiState.receivedOrders,
                                 onAdvance = { viewModel.advanceStatus(it) },
-                                onCancel = {
-                                    orderToCancel = it
-                                    isNoShowCancel = false
-                                },
+                                onCancel = { orderToCancel = it },
                                 modifier = Modifier.width(300.dp).fillMaxHeight()
                             )
 
@@ -185,10 +175,7 @@ fun CanteenOrdersScreen(
                                 tagTextColor = OnSecondaryContainer,
                                 orders = uiState.preparingOrders,
                                 onAdvance = { viewModel.advanceStatus(it) },
-                                onCancel = {
-                                    orderToCancel = it
-                                    isNoShowCancel = false
-                                },
+                                onCancel = { orderToCancel = it },
                                 modifier = Modifier.width(300.dp).fillMaxHeight()
                             )
 
@@ -199,10 +186,7 @@ fun CanteenOrdersScreen(
                                 tagTextColor = Success,
                                 orders = uiState.readyOrders,
                                 onAdvance = { viewModel.advanceStatus(it) },
-                                onCancel = {
-                                    orderToCancel = it
-                                    isNoShowCancel = true
-                                },
+                                onCancel = { orderToCancel = it },
                                 modifier = Modifier.width(300.dp).fillMaxHeight()
                             )
                         }
@@ -217,28 +201,58 @@ fun CanteenOrdersScreen(
         )
     }
 
-    // Cancel Confirmation Dialog
+    // Cancel Confirmation Dialog with reason selection
     orderToCancel?.let { order ->
+        val isReady = order.status == OrderStatus.READY.name
+        var selectedReason by remember(order.id) {
+            mutableStateOf(if (isReady) CancelReason.NO_SHOW else CancelReason.SOLD_OUT)
+        }
+        val reasons = listOf(
+            CancelReason.SOLD_OUT,
+            CancelReason.OVERLOAD,
+            CancelReason.NO_SHOW,
+            CancelReason.OTHER
+        )
+
         AlertDialog(
             onDismissRequest = { orderToCancel = null },
             title = {
                 Text(
-                    text = if (isNoShowCancel) "Xác nhận không đến lấy" else "Hủy đơn hàng",
+                    text = "Hủy đơn #${order.pickupCode}?",
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
-                Text(
-                    if (isNoShowCancel)
-                        "Xác nhận học sinh không đến lấy đơn #${order.pickupCode} (${order.userName})? Đơn sẽ chuyển sang trạng thái Đã hủy."
-                    else
-                        "Bạn có chắc muốn hủy đơn #${order.pickupCode} (${order.userName})? Suất ăn khung giờ sẽ được hoàn trả."
-                )
+                Column {
+                    Text(
+                        text = "Chọn lý do hủy đơn của ${order.userName.ifBlank { "học sinh" }}:",
+                        fontSize = 14.sp,
+                        color = OnSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    reasons.forEach { reason ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedReason = reason }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = selectedReason == reason,
+                                onClick = { selectedReason = reason },
+                                colors = RadioButtonDefaults.colors(selectedColor = Primary)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = reason.label, fontSize = 14.sp, color = OnSurface)
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.cancelOrder(order.id)
+                        viewModel.cancelOrder(order.id, selectedReason)
                         orderToCancel = null
                     }
                 ) {
@@ -247,7 +261,7 @@ fun CanteenOrdersScreen(
             },
             dismissButton = {
                 TextButton(onClick = { orderToCancel = null }) {
-                    Text("Đóng")
+                    Text("Giữ đơn")
                 }
             }
         )

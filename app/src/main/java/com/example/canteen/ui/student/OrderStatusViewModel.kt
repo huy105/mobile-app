@@ -3,6 +3,7 @@ package com.example.canteen.ui.student
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.canteen.data.model.CancelReason
 import com.example.canteen.data.model.Order
 import com.example.canteen.data.repository.OrderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -59,7 +60,7 @@ class OrderStatusViewModel @Inject constructor(
         val currentOrder = _uiState.value.order ?: return
         viewModelScope.launch {
             _uiState.update { it.copy(isCancelling = true) }
-            val result = orderRepository.cancelOrder(currentOrder.id)
+            val result = orderRepository.cancelOrder(currentOrder.id, "STUDENT", CancelReason.CHANGED_MIND)
             result.onFailure { error ->
                 _uiState.update {
                     it.copy(

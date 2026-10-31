@@ -18,3 +18,6 @@ data class TimeSlot(
         get() = currentOrders >= maxOrders
 }
 
+/** Id of the per-day order counter document: `timeSlotCounters/{slotId}_{yyyy-MM-dd}`. */
+fun slotCounterId(slotId: String, date: String): String = "${slotId}_$date"
+

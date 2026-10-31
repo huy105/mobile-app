@@ -15,9 +15,15 @@ data class Order(
     val status: String = OrderStatus.RECEIVED.name,
     val total: Long = 0L,
     val date: String = "", // format yyyy-MM-dd
-    val createdAt: Timestamp = Timestamp.now()
+    val createdAt: Timestamp = Timestamp.now(),
+    val updatedAt: Timestamp? = null,
+    val preparingAt: Timestamp? = null,
+    val readyAt: Timestamp? = null,
+    val completedAt: Timestamp? = null,
+    val cancelledAt: Timestamp? = null,
+    val cancelledBy: String = "",     // "STUDENT" | "CANTEEN" | "" (chưa hủy)
+    val cancelReason: String = ""     // tên của CancelReason | "" (chưa hủy)
 ) {
     val orderStatus: OrderStatus
         get() = OrderStatus.fromString(status)
 }
-

@@ -49,7 +49,9 @@ class CartRepositoryImpl @Inject constructor() : CartRepository {
                     menuItemId = item.id,
                     name = item.name,
                     price = item.price,
-                    quantity = 1
+                    quantity = 1,
+                    category = item.category,
+                    dishKey = item.dishKey
                 )
             }
             current.copy(items = updated)

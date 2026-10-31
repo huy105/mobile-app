@@ -45,6 +45,13 @@ class SeedRepositoryImpl @Inject constructor(
                 for (i in 0 until menuArray.length()) {
                     val obj = menuArray.getJSONObject(i)
                     val docRef = firestore.collection("menuItems").document()
+                    val tagsArray = obj.optJSONArray("tags")
+                    val tagsList = mutableListOf<String>()
+                    if (tagsArray != null) {
+                        for (t in 0 until tagsArray.length()) {
+                            tagsList.add(tagsArray.getString(t))
+                        }
+                    }
                     val menuItem = MenuItem(
                         id = docRef.id,
                         name = obj.getString("name"),
@@ -53,7 +60,11 @@ class SeedRepositoryImpl @Inject constructor(
                         category = obj.getString("category"),
                         inStock = obj.optBoolean("inStock", true),
                         imageUrl = obj.optString("imageUrl", ""),
-                        date = today
+                        date = today,
+                        dishKey = obj.optString("dishKey", ""),
+                        tags = tagsList,
+                        dailyQuota = obj.optInt("dailyQuota", 0),
+                        soldQty = 0
                     )
                     batch.set(docRef, menuItem)
                 }

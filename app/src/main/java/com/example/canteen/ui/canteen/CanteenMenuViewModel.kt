@@ -75,6 +75,17 @@ class CanteenMenuViewModel @Inject constructor(
         }
     }
 
+    fun updateQuota(menuItemId: String, dailyQuota: Int) {
+        viewModelScope.launch {
+            val result = menuRepository.updateQuota(menuItemId, dailyQuota)
+            if (result.isFailure) {
+                _uiState.update {
+                    it.copy(errorMessage = result.exceptionOrNull()?.message ?: "Lỗi khi cập nhật số suất")
+                }
+            }
+        }
+    }
+
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
     }

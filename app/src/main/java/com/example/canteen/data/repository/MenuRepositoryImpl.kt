@@ -43,6 +43,26 @@ class MenuRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateQuota(menuItemId: String, dailyQuota: Int): Result<Unit> {
+        return try {
+            val quota = maxOf(0, dailyQuota)
+            val docRef = firestore.collection("menuItems").document(menuItemId)
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(docRef)
+                if (!snapshot.exists()) return@runTransaction
+                val soldQty = (snapshot.getLong("soldQty") ?: 0L).toInt()
+                val updates = mutableMapOf<String, Any>("dailyQuota" to quota)
+                if (quota > 0 && soldQty >= quota) {
+                    updates["inStock"] = false
+                }
+                transaction.update(docRef, updates)
+            }.await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getMenuItemById(menuItemId: String): MenuItem? {
         return try {
             val doc = firestore.collection("menuItems").document(menuItemId).get().await()

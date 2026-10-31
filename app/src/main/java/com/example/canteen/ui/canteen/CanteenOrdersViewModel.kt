@@ -2,6 +2,7 @@ package com.example.canteen.ui.canteen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.canteen.data.model.CancelReason
 import com.example.canteen.data.model.Order
 import com.example.canteen.data.model.OrderStatus
 import com.example.canteen.data.model.TimeSlot
@@ -128,10 +129,10 @@ class CanteenOrdersViewModel @Inject constructor(
         }
     }
 
-    fun cancelOrder(orderId: String) {
+    fun cancelOrder(orderId: String, reason: CancelReason) {
         viewModelScope.launch {
             _uiState.update { it.copy(isActionInProgress = true) }
-            val result = orderRepository.cancelOrder(orderId)
+            val result = orderRepository.cancelOrder(orderId, "CANTEEN", reason)
             _uiState.update {
                 it.copy(
                     isActionInProgress = false,

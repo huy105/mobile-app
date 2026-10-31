@@ -1,13 +1,14 @@
 package com.example.canteen.data.repository
 
+import com.example.canteen.data.model.CancelReason
 import com.example.canteen.data.model.Order
 import com.example.canteen.data.model.OrderItem
 import com.example.canteen.data.model.OrderStatus
 import com.example.canteen.data.model.TimeSlot
+import com.example.canteen.data.model.slotCounterId
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -32,7 +33,7 @@ class OrderRepositoryImpl @Inject constructor(
         date: String
     ): Result<Order> {
         return try {
-            // 1. Gather existing pickup codes for this date to ensure uniqueness
+            // 1. Generate unique 4-digit code for today
             val existingCodes = firestore.collection("orders")
                 .whereEqualTo("date", date)
                 .get()
@@ -44,8 +45,9 @@ class OrderRepositoryImpl @Inject constructor(
                 pickupCode = String.format(Locale.getDefault(), "%04d", Random.nextInt(10000))
             } while (pickupCode in existingCodes)
 
-            // 2. Execute Firestore transaction for stock and slot capacity validation
+            // 2. Execute Firestore transaction for stock, quota and slot capacity validation
             val slotRef = firestore.collection("timeSlots").document(slotId)
+            val counterRef = firestore.collection("timeSlotCounters").document(slotCounterId(slotId, date))
             val newOrderRef = firestore.collection("orders").document()
 
             val createdOrder = firestore.runTransaction { transaction ->
@@ -57,28 +59,61 @@ class OrderRepositoryImpl @Inject constructor(
                 val slot = slotDoc.toObject(TimeSlot::class.java)
                     ?: throw FirebaseFirestoreException("Không thể đọc thông tin khung giờ", FirebaseFirestoreException.Code.ABORTED)
 
-                if (slot.currentOrders >= slot.maxOrders) {
+                // Capacity is counted per day, not on the slot document itself
+                val counterDoc = transaction.get(counterRef)
+                val ordersToday = counterDoc.getLong("count") ?: 0L
+                if (ordersToday >= slot.maxOrders) {
                     throw FirebaseFirestoreException("Khung giờ đã đầy", FirebaseFirestoreException.Code.ABORTED)
                 }
 
-                // Check menu items in stock
-                for (item in items) {
+                // Read all menu item docs before any writes
+                val itemDocPairs = items.mapNotNull { item ->
                     if (item.menuItemId.isNotBlank()) {
                         val itemRef = firestore.collection("menuItems").document(item.menuItemId)
                         val itemDoc = transaction.get(itemRef)
-                        if (itemDoc.exists()) {
-                            val inStock = itemDoc.getBoolean("inStock") ?: true
-                            if (!inStock) {
-                                throw FirebaseFirestoreException("Món ${item.name} đã hết hàng", FirebaseFirestoreException.Code.ABORTED)
-                            }
+                        Triple(item, itemRef, itemDoc)
+                    } else null
+                }
+
+                // Check menu items in stock and quota
+                for ((item, _, itemDoc) in itemDocPairs) {
+                    if (itemDoc.exists()) {
+                        val inStock = itemDoc.getBoolean("inStock") ?: true
+                        if (!inStock) {
+                            throw FirebaseFirestoreException("Món ${item.name} đã hết hàng", FirebaseFirestoreException.Code.ABORTED)
+                        }
+                        val dailyQuota = (itemDoc.getLong("dailyQuota") ?: 0L).toInt()
+                        val soldQty = (itemDoc.getLong("soldQty") ?: 0L).toInt()
+                        if (dailyQuota > 0 && soldQty + item.quantity > dailyQuota) {
+                            val remaining = (dailyQuota - soldQty).coerceAtLeast(0)
+                            throw FirebaseFirestoreException("Món ${item.name} chỉ còn $remaining suất", FirebaseFirestoreException.Code.ABORTED)
                         }
                     }
                 }
 
-                // Increment slot currentOrders
-                transaction.update(slotRef, "currentOrders", slot.currentOrders + 1)
+                // Writes start here:
+                // Increment today's counter for this slot
+                transaction.set(
+                    counterRef,
+                    mapOf("slotId" to slotId, "date" to date, "count" to ordersToday + 1)
+                )
+
+                // Update soldQty and inStock for items
+                for ((item, itemRef, itemDoc) in itemDocPairs) {
+                    if (itemDoc.exists()) {
+                        val dailyQuota = (itemDoc.getLong("dailyQuota") ?: 0L).toInt()
+                        val soldQty = (itemDoc.getLong("soldQty") ?: 0L).toInt()
+                        val newSoldQty = soldQty + item.quantity
+                        val updates = mutableMapOf<String, Any>("soldQty" to newSoldQty)
+                        if (dailyQuota > 0 && newSoldQty >= dailyQuota) {
+                            updates["inStock"] = false
+                        }
+                        transaction.update(itemRef, updates)
+                    }
+                }
 
                 // Create Order
+                val now = Timestamp.now()
                 val order = Order(
                     id = newOrderRef.id,
                     userId = userId,
@@ -90,7 +125,8 @@ class OrderRepositoryImpl @Inject constructor(
                     status = OrderStatus.RECEIVED.name,
                     total = total,
                     date = date,
-                    createdAt = Timestamp.now()
+                    createdAt = now,
+                    updatedAt = now
                 )
                 transaction.set(newOrderRef, order)
                 order
@@ -160,9 +196,20 @@ class OrderRepositoryImpl @Inject constructor(
         newStatus: OrderStatus
     ): Result<Unit> {
         return try {
+            val now = Timestamp.now()
+            val updates = mutableMapOf<String, Any>(
+                "status" to newStatus.name,
+                "updatedAt" to now
+            )
+            when (newStatus) {
+                OrderStatus.PREPARING -> updates["preparingAt"] = now
+                OrderStatus.READY -> updates["readyAt"] = now
+                OrderStatus.COMPLETED -> updates["completedAt"] = now
+                else -> {}
+            }
             firestore.collection("orders")
                 .document(orderId)
-                .update("status", newStatus.name)
+                .update(updates)
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -170,7 +217,11 @@ class OrderRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun cancelOrder(orderId: String): Result<Unit> {
+    override suspend fun cancelOrder(
+        orderId: String,
+        cancelledBy: String,
+        reason: CancelReason
+    ): Result<Unit> {
         return try {
             val orderRef = firestore.collection("orders").document(orderId)
 
@@ -186,19 +237,55 @@ class OrderRepositoryImpl @Inject constructor(
                     return@runTransaction
                 }
 
-                // Decrement slot currentOrders if slot exists
-                if (order.slotId.isNotBlank()) {
-                    val slotRef = firestore.collection("timeSlots").document(order.slotId)
-                    val slotDoc = transaction.get(slotRef)
-                    if (slotDoc.exists()) {
-                        val currentOrders = slotDoc.getLong("currentOrders") ?: 0L
-                        if (currentOrders > 0) {
-                            transaction.update(slotRef, "currentOrders", currentOrders - 1)
+                // 1. Read all menuItem docs for items in the order BEFORE any writes
+                val menuItemDocs = order.items.mapNotNull { item ->
+                    if (item.menuItemId.isNotBlank()) {
+                        val ref = firestore.collection("menuItems").document(item.menuItemId)
+                        val snap = transaction.get(ref)
+                        Triple(item, ref, snap)
+                    } else null
+                }
+
+                // 2. Read counterDoc
+                val counterRef = if (order.slotId.isNotBlank() && order.date.isNotBlank()) {
+                    firestore.collection("timeSlotCounters").document(slotCounterId(order.slotId, order.date))
+                } else null
+                val counterDoc = counterRef?.let { transaction.get(it) }
+
+                // Writes start here:
+                // Give the seat back to the order's own day
+                if (counterRef != null && counterDoc != null && counterDoc.exists()) {
+                    val count = counterDoc.getLong("count") ?: 0L
+                    if (count > 0) {
+                        transaction.update(counterRef, "count", count - 1)
+                    }
+                }
+
+                // Restore soldQty if reason != SOLD_OUT
+                if (reason != CancelReason.SOLD_OUT) {
+                    for ((item, ref, snap) in menuItemDocs) {
+                        if (snap.exists()) {
+                            val dailyQuota = (snap.getLong("dailyQuota") ?: 0L).toInt()
+                            val soldQty = (snap.getLong("soldQty") ?: 0L).toInt()
+                            if (dailyQuota > 0) {
+                                val newSoldQty = maxOf(0, soldQty - item.quantity)
+                                transaction.update(ref, "soldQty", newSoldQty)
+                            }
                         }
                     }
                 }
 
-                transaction.update(orderRef, "status", OrderStatus.CANCELLED.name)
+                val now = Timestamp.now()
+                transaction.update(
+                    orderRef,
+                    mapOf(
+                        "status" to OrderStatus.CANCELLED.name,
+                        "cancelledAt" to now,
+                        "updatedAt" to now,
+                        "cancelledBy" to cancelledBy,
+                        "cancelReason" to reason.name
+                    )
+                )
             }.await()
 
             Result.success(Unit)
@@ -230,14 +317,24 @@ class OrderRepositoryImpl @Inject constructor(
                 return Result.failure(Exception("Đơn chưa sẵn sàng"))
             }
 
+            val now = Timestamp.now()
             firestore.collection("orders").document(order.id)
-                .update("status", OrderStatus.COMPLETED.name)
+                .update(
+                    mapOf(
+                        "status" to OrderStatus.COMPLETED.name,
+                        "completedAt" to now,
+                        "updatedAt" to now
+                    )
+                )
                 .await()
 
-            Result.success(order.copy(status = OrderStatus.COMPLETED.name))
+            Result.success(order.copy(
+                status = OrderStatus.COMPLETED.name,
+                completedAt = now,
+                updatedAt = now
+            ))
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 }
-

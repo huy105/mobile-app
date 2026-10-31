@@ -93,15 +93,37 @@ class MenuViewModel @Inject constructor(
     }
 
     fun addToCart(item: MenuItem) {
+        if (!item.inStock) return
+        val remaining = item.remainingQty
+        if (remaining != null) {
+            val inCart = cartRepository.cartState.value.items[item.id]?.quantity ?: 0
+            if (inCart >= remaining) {
+                _errorMessage.value = "Chỉ còn $remaining suất"
+                return
+            }
+        }
         cartRepository.addItem(item)
     }
 
     fun increaseQuantity(menuItemId: String) {
+        val item = uiState.value.items.find { it.id == menuItemId }
+        val remaining = item?.remainingQty
+        if (remaining != null) {
+            val inCart = cartRepository.cartState.value.items[menuItemId]?.quantity ?: 0
+            if (inCart >= remaining) {
+                _errorMessage.value = "Chỉ còn $remaining suất"
+                return
+            }
+        }
         cartRepository.increaseQuantity(menuItemId)
     }
 
     fun decreaseQuantity(menuItemId: String) {
         cartRepository.decreaseQuantity(menuItemId)
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 }
 
