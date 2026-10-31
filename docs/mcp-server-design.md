@@ -205,6 +205,27 @@ Bảo mật: file key để **ngoài repo** (hoặc tên `serviceAccount.json`, 
 | "Bếp chuẩn bị mất bao lâu, ngày nào chậm?" | `get_prep_time_stats` |
 | "Mai nên chuẩn bị bao nhiêu suất mỗi món?" | `forecast_tomorrow` |
 | "Hôm nay có món chay dưới 30k không?" | `list_menu` |
+| "Tuần này doanh thu so với tuần trước thế nào?" | `get_sales_summary` (có `% thay đổi` so kỳ liền trước) |
+| "Ngày nào trong tháng doanh thu cao nhất?" | `get_sales_summary` (`group_by: day`) |
+| "Doanh thu theo nhóm món (cơm, bún, đồ uống) tuần này?" | `get_sales_summary` (`group_by: category`) |
+| "Khung chiều tối có đông không, có đáng mở không?" | `get_orders_by_slot` (so `fillRate` của các khung 17:00 - 18:00 với khung trưa) |
+| "Khung giờ nào hay bị đầy nhất?" | `get_orders_by_slot` (danh sách khung hay đầy) |
+| "Món nào bán chạy nhất hôm nay, bán được mấy suất?" | `get_top_items` (best, `date_from = date_to` = hôm nay) |
+| "Hôm qua món nào hết suất sớm?" | `get_unsold_items` (cột "bán hết sớm") |
+| "Vì sao hôm 15 nhiều đơn bị hủy?" | `get_cancellations` (lọc `date_from = date_to = 15`) |
+| "Có bao nhiêu khách không đến lấy tuần này?" | `get_cancellations` (số `NO_SHOW`) |
+| "Món nào hay bị hủy vì hết món?" | `get_cancellations` (top `dishKey` trong đơn hủy) |
+| "Bếp chậm ở khung giờ nào?" | `get_prep_time_stats` (thống kê theo khung giờ) |
+| "Mai là thứ Hai, nên làm thêm món nào?" | `forecast_tomorrow` (so dự báo với `dailyQuota` hiện tại) |
+| "Có món nào dưới 25k còn nhiều suất không?" | `list_menu` (`max_price`, `only_available`) |
+| "Hôm qua có món nào chay không?" | `list_menu` (`date` = hôm qua, `tags: ["vegetarian"]`) |
+
+### Câu hỏi nằm ngoài khả năng (server phải nói rõ là không trả lời được, không bịa số)
+- Hỏi về **một khách cụ thể** ("em Minh Anh hay mua gì?"): `MASK_PII=true` nên không có tên, chỉ có mã khách đã băm.
+- Hỏi về **lợi nhuận, giá vốn, chi phí nguyên liệu**: dữ liệu chỉ có doanh thu, không có giá vốn.
+- Hỏi về **đánh giá hay mức hài lòng** của học sinh: app không lưu.
+- Hỏi về ngày **chưa có dữ liệu** hoặc quá 92 ngày trong một lần gọi: trả thông báo "chưa đủ dữ liệu" hoặc yêu cầu thu hẹp khoảng ngày.
+- Yêu cầu **sửa dữ liệu** (đổi giá, hủy đơn, tắt món): server chỉ đọc.
 
 ## 9. Kiểm thử và tiêu chí hoàn thành
 
