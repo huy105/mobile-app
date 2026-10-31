@@ -1,0 +1,14 @@
+{
+  "name": "seed-history",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Nạp dữ liệu lịch sử giả vào Firestore để demo báo cáo",
+  "scripts": {
+    "dry-run": "node seed-history.js --dry-run",
+    "seed": "node seed-history.js",
+    "clean": "node seed-history.js --clean"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

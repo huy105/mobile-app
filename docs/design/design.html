@@ -314,13 +314,13 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     <div class="statusbar"><span>11:05</span><span>▮▮▮</span></div>
     <div class="appbar">Quản lý món hôm nay</div>
     <div class="body">
-      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍛</div><div class="t"><b>Cơm sườn nướng</b><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
-      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍚</div><div class="t"><b>Cơm gà xối mỡ</b><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
+      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍛</div><div class="t"><b>Cơm sườn nướng</b><small style="display:block;color:var(--on-surface-variant);font-size:12px;margin:2px 0 4px">Đã bán 12/30 suất · <u style="color:var(--primary);font-weight:700">Sửa suất</u></small><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
+      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍚</div><div class="t"><b>Gà rán giòn</b><small style="display:block;color:var(--on-surface-variant);font-size:12px;margin:2px 0 4px">Đã bán 27/30 suất · <u style="color:var(--primary);font-weight:700">Sửa suất</u></small><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
       <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px;opacity:.5">🍖</div><div class="t"><b style="opacity:.6">Cơm thịt kho</b><span class="tag red">Hết món</span></div><div class="switch"></div></div>
-      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍜</div><div class="t"><b>Bún bò</b><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
+      <div class="card item" style="margin-bottom:10px"><div class="thumb" style="width:56px;height:56px;font-size:26px">🍜</div><div class="t"><b>Bún bò Huế</b><small style="display:block;color:var(--on-surface-variant);font-size:12px;margin:2px 0 4px">Không giới hạn · <u style="color:var(--primary);font-weight:700">Sửa suất</u></small><span class="tag green">Còn món</span></div><div class="switch on"></div></div>
     </div>
   </div>
-  <p class="note">Switch bật = còn món (success), tắt = hết món. Đổi ngay lập tức, học sinh thấy cập nhật realtime. Trên tablet hiển thị dạng lưới 2 cột trong vùng nội dung.</p></div>
+  <p class="note">Switch bật = còn món (success), tắt = hết món. Đổi ngay lập tức, học sinh thấy cập nhật realtime. Trên tablet hiển thị dạng lưới 2 cột trong vùng nội dung. Dòng "Đã bán X/Y suất" hiện khi món có hạn mức, "Không giới hạn" khi <code>dailyQuota = 0</code>; bấm "Sửa suất" mở hộp thoại nhập số.</p></div>
 
   <div class="col"><div class="cap">C3. VerifyCodeScreen (trả đồ)</div>
   <div class="phone">
@@ -333,6 +333,23 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     </div>
   </div>
   <p class="note">Đủ 4 số thì tự kiểm tra. Đúng: Snackbar/banner xanh "Đã trả đơn 5509 - Lê Cường" và xóa ô nhập. Sai hoặc đơn chưa READY: ô nhập rung nhẹ, viền đỏ, báo lỗi rõ ("Không tìm thấy mã", "Đơn chưa sẵn sàng"). Dùng bàn phím số tự vẽ như hình, ô cao 56dp.</p></div>
+
+  <div class="col"><div class="cap">C4. Hộp thoại hủy đơn (căng tin, AlertDialog)</div>
+  <div class="phone" style="background:#0007">
+    <div class="statusbar" style="color:#fff"><span>11:41</span><span>▮▮▮</span></div>
+    <div style="flex:1;display:grid;place-items:center;padding:0 24px">
+      <div style="background:var(--surface);border-radius:28px;padding:24px;width:100%">
+        <div style="font-size:20px;font-weight:800;margin-bottom:4px">Hủy đơn #5509?</div>
+        <div style="font-size:13px;color:var(--on-surface-variant);margin-bottom:14px">Chọn lý do để thống kê. Học sinh sẽ thấy đơn bị hủy.</div>
+        <div class="slot" style="padding:12px;margin-bottom:8px"><b style="font-size:15px">Hết món</b><div class="radio"></div></div>
+        <div class="slot" style="padding:12px;margin-bottom:8px"><b style="font-size:15px">Quá tải</b><div class="radio"></div></div>
+        <div class="slot sel" style="padding:12px;margin-bottom:8px"><b style="font-size:15px">Không đến lấy</b><div class="radio"></div></div>
+        <div class="slot" style="padding:12px;margin-bottom:16px"><b style="font-size:15px">Khác</b><div class="radio"></div></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end"><div class="btn sm ghost" style="border-color:transparent">Giữ đơn</div><div class="btn sm" style="background:var(--error)">Xác nhận hủy</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">Mở khi bấm "Hủy" ở thẻ đơn. Đơn READY thì chọn sẵn "Không đến lấy", còn lại chọn sẵn "Hết món". Không hiện lý do "Học sinh đổi ý" (chỉ dành cho học sinh tự hủy). Nút xác nhận màu error, nút "Giữ đơn" dạng text.</p></div>
 </div>
 
 <h2>4. Quy tắc chung cho Compose</h2>

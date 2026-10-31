@@ -42,6 +42,8 @@ mobile-app/                       (gốc repo, cũng là gốc project Android)
 │  ├─ google-services.json        (người dùng tự đặt vào, xem mục 8)
 │  ├─ build.gradle.kts
 │  └─ src/main/...                (code Kotlin theo cây package bên dưới)
+├─ tools/seed-history/            (script Node nạp dữ liệu lịch sử giả vào Firestore, có sẵn, agent không sửa)
+├─ tools/mcp-firestore/           (MCP server báo cáo, làm sau demo theo docs/mcp-server-design.md)
 ├─ gradle/libs.versions.toml      (version catalog)
 ├─ build.gradle.kts
 ├─ settings.gradle.kts
@@ -76,11 +78,14 @@ Tất cả model là Kotlin `data class` có giá trị mặc định (để Fir
 | Collection | Trường |
 |---|---|
 | `users/{uid}` | `name: String`, `email: String`, `role: "STUDENT" \| "CANTEEN"` |
-| `menuItems/{id}` | `name`, `description`, `price: Long` (VND), `imageUrl`, `category`, `inStock: Boolean`, `date: String` (yyyy-MM-dd) |
-| `timeSlots/{id}` | `label` (vd "11:15 - 11:30"), `startMinute: Int`, `endMinute: Int`, `maxOrders: Int`, `currentOrders: Int` |
-| `orders/{id}` | `userId`, `userName`, `items: List<OrderItem>`, `slotId`, `slotLabel`, `pickupCode: String` (4 số), `status`, `total: Long`, `date: String`, `createdAt: Timestamp` |
+| `menuItems/{id}` | `name`, `description`, `price: Long` (VND), `imageUrl`, `category`, `inStock: Boolean`, `date: String` (yyyy-MM-dd), `dishKey`, `tags: List<String>`, `dailyQuota: Int` (0 = không giới hạn), `soldQty: Int` |
+| `timeSlots/{id}` | `label` (vd "11:15 - 11:30"), `startMinute: Int`, `endMinute: Int`, `maxOrders: Int` |
+| `timeSlotCounters/{slotId}_{yyyy-MM-dd}` | `slotId`, `date`, `count: Int` (số đơn đã đặt của khung giờ trong ngày đó; sang ngày mới là document mới nên tự về 0) |
+| `orders/{id}` | `userId`, `userName`, `items: List<OrderItem>`, `slotId`, `slotLabel`, `pickupCode: String` (4 số), `status`, `total: Long`, `date: String`, `createdAt: Timestamp`, và các trường theo dõi: `updatedAt`, `preparingAt`, `readyAt`, `completedAt`, `cancelledAt` (Timestamp?), `cancelledBy` (STUDENT/CANTEEN), `cancelReason` (tên `CancelReason`) |
 
-`OrderItem`: `menuItemId`, `name`, `price`, `quantity`.
+`OrderItem`: `menuItemId`, `name`, `price`, `quantity`, `category`, `dishKey`.
+
+Chi tiết các trường theo dõi, enum `CancelReason` và cách ghi từng trường nằm trong **`docs/analytics-data-plan.md`** (bắt buộc làm theo).
 
 `OrderStatus` enum: `RECEIVED`, `PREPARING`, `READY`, `COMPLETED`, `CANCELLED`. Lưu dưới dạng String.
 
@@ -92,7 +97,7 @@ Tất cả model là Kotlin `data class` có giá trị mặc định (để Fir
 ### Học sinh (STUDENT)
 1. **MenuScreen**: danh sách món của ngày hôm nay (lọc theo `date`), nhóm theo `category`. Món `inStock = false` làm mờ, gắn nhãn "Hết món", không thêm được. Nút thêm vào giỏ, badge số lượng trên icon giỏ.
 2. **CartScreen**: chỉnh số lượng, xóa món, hiện tổng tiền. Nút "Chọn giờ nhận".
-3. **SlotPickerScreen**: danh sách khung giờ, hiện số suất còn lại (`maxOrders - currentOrders`). Khung đã đầy thì disable. Khung đã qua giờ thì disable. Nút "Xác nhận đặt" (thanh toán giả lập, hiển thị dòng "Thanh toán tại quầy / giả lập").
+3. **SlotPickerScreen**: danh sách khung giờ, hiện số suất còn lại (`maxOrders` trừ `count` của `timeSlotCounters` hôm nay). Khung đã đầy thì disable. Khung đã qua giờ thì disable. Nút "Xác nhận đặt" (thanh toán giả lập, hiển thị dòng "Thanh toán tại quầy / giả lập").
 4. **OrderStatusScreen**: hiện mã nhận đồ 4 số cỡ lớn, khung giờ, danh sách món, trạng thái dạng stepper (Đã nhận → Đang chuẩn bị → Sẵn sàng → Hoàn thành), cập nhật **realtime** bằng Firestore snapshot listener. Nút "Hủy đơn" chỉ hiện khi `RECEIVED`.
 5. **HistoryScreen**: danh sách đơn của user, mới nhất trước, bấm vào xem chi tiết.
 
@@ -123,11 +128,12 @@ Quy tắc ưu tiên:
 
 ## 6. Quy tắc nghiệp vụ
 
-- **Giới hạn khung giờ**: khi đặt đơn dùng **Firestore transaction**: đọc `timeSlots/{id}`, nếu `currentOrders >= maxOrders` thì lỗi "Khung giờ đã đầy"; ngược lại tăng `currentOrders` và tạo order trong cùng transaction.
+- **Giới hạn khung giờ**: khi đặt đơn dùng **Firestore transaction**: đọc `timeSlotCounters/{slotId}_{date}` (chưa có thì coi `count = 0`), nếu `count >= maxOrders` của khung giờ thì lỗi "Khung giờ đã đầy"; ngược lại tăng `count` và tạo order trong cùng transaction. Bộ đếm tính theo ngày nên không bao giờ tích lũy qua ngày.
 - **Mã nhận đồ**: 4 chữ số, duy nhất trong cùng ngày (kiểm tra trùng khi tạo, random lại nếu trùng).
 - **Kiểm tra tồn kho khi đặt**: nếu có món vừa chuyển `inStock = false` thì chặn đặt và báo món nào hết.
-- **Hết món sau khi đặt**: căng tin hủy đơn (status `CANCELLED`) và giảm `currentOrders` của khung giờ.
-- **Hủy đơn**: học sinh chỉ hủy được khi `RECEIVED`; hủy thì giảm `currentOrders`.
+- **Số suất mỗi món**: `dailyQuota > 0` thì đặt hàng trừ `soldQty`; vượt số suất còn lại bị chặn; chạm hạn mức thì tự `inStock = false`. Chi tiết ở `docs/analytics-data-plan.md`.
+- **Hết món sau khi đặt**: căng tin hủy đơn (status `CANCELLED`, lý do `SOLD_OUT`) và trả lại suất khung giờ.
+- **Hủy đơn**: học sinh chỉ hủy được khi `RECEIVED`; hủy thì trả lại suất khung giờ (giảm `count` của ngày đặt) và ghi `cancelledBy`, `cancelReason`, `cancelledAt`. Căng tin hủy phải chọn lý do trong hộp thoại.
 - **Đơn không đến lấy**: demo chỉ cần căng tin có thể hủy đơn `READY` thủ công.
 - Giá hiển thị theo định dạng VND (vd "25.000đ").
 
@@ -187,15 +193,34 @@ Quy tắc ưu tiên:
 - [ ] `./gradlew assembleDebug` thành công, ra file APK debug.
 - [ ] Đăng nhập `student@demo.com` vào luồng học sinh, `canteen@demo.com` vào luồng căng tin; đăng xuất và phiên được giữ khi mở lại app.
 - [ ] Menu chỉ hiện món của hôm nay; món hết hàng bị làm mờ và không thêm được vào giỏ.
-- [ ] Đặt đơn thành công tạo order với mã 4 số, `currentOrders` của khung giờ tăng 1.
+- [ ] Đặt đơn thành công tạo order với mã 4 số, bộ đếm `timeSlotCounters` của khung giờ hôm nay tăng 1.
 - [ ] Khung giờ đủ `maxOrders` thì không đặt được (kể cả khi 2 máy đặt cùng lúc).
 - [ ] Căng tin đổi trạng thái thì màn hình học sinh cập nhật ngay, không cần refresh.
 - [ ] Căng tin tắt món thì menu học sinh cập nhật ngay.
 - [ ] Nhập đúng mã ở VerifyCodeScreen thì đơn `READY` chuyển `COMPLETED`; sai mã hoặc đơn chưa READY thì báo lỗi.
 - [ ] Học sinh hủy đơn `RECEIVED` thì suất khung giờ được trả lại.
 - [ ] Có trạng thái loading, rỗng và lỗi ở các màn hình danh sách.
+- [ ] Mọi tiêu chí trong mục 7 của `docs/analytics-data-plan.md` đều đạt (dữ liệu phân tích, hộp thoại hủy, số suất mỗi món).
 - [ ] Giao diện của 9 màn hình khớp `docs/design/design.html` (màu, font, bo góc, bố cục); luồng căng tin dùng NavigationRail trên tablet.
 
 ## 10. Hướng mở rộng (ngoài demo)
 
 Thanh toán VietQR tự động, quét QR bằng camera, push notification (FCM), Group Order, Combo Builder, Canteen Pass và tích điểm, "Hôm nay ăn gì", báo cáo doanh thu, admin portal và phân quyền, siết Firestore rules theo role.
+
+## 11. Ý tưởng MCP (sau demo, KHÔNG làm trong demo)
+
+Mục này chỉ ghi lại ý tưởng. Agent không được triển khai khi làm demo.
+
+### 11.1 MCP báo cáo cho chủ căng tin (ưu tiên)
+- Một MCP server **chỉ đọc**, đọc Firestore bằng Firebase Admin SDK (service account key đặt ngoài repo, thêm vào `.gitignore`). Chạy local (stdio) trên máy chủ quán, dùng từ Claude Desktop hoặc Claude Code.
+- Chủ căng tin hỏi bằng tiếng Việt, ví dụ: doanh thu và số suất hôm nay; khung giờ đông nhất tuần này; món bán chạy và món ế; số đơn bị hủy; gợi ý số suất cần chuẩn bị cho ngày mai; tóm tắt tuần thành báo cáo.
+- Công cụ dự kiến: `get_sales_summary(date_range)`, `get_top_items(range)`, `get_orders_by_slot(date)`, `get_cancellations(range)`, `list_menu(date)`. Không có công cụ ghi hoặc xóa. Che bớt thông tin cá nhân của học sinh (tên, email) trong kết quả.
+- Đặt ở `tools/mcp-firestore/` (ngoài module `app`). Thiết kế chi tiết để code: **`docs/mcp-server-design.md`** (TypeScript, 8 công cụ, chạy local).
+
+### 11.2 Hỏi đáp thực đơn cho khách (không dùng MCP)
+- MCP phục vụ AI client, không phải app Android. Học sinh hỏi món hôm nay thì làm **chatbot trong app**: ô chat gọi Claude API qua một Cloud Function (cần gói Blaze, giữ API key trên server), đưa thực đơn hôm nay (khoảng 10 món) vào prompt.
+- Cách rẻ hơn: bộ lọc món theo giá và loại ngay trong app.
+
+### 11.3 Dữ liệu để MCP trả lời đúng
+
+Đã được thiết kế đầy đủ trong **`docs/analytics-data-plan.md`**: các trường theo dõi thời gian và lý do hủy trên `orders`, `category` và `dishKey` trên `OrderItem`, `dishKey`/`tags`/`dailyQuota`/`soldQty` trên `menuItems`, bộ đếm khung giờ theo ngày (`timeSlotCounters`), và hợp đồng đọc cho MCP. Phần này được làm trong app **trước** để dữ liệu được ghi từ sớm; MCP server vẫn làm sau demo.

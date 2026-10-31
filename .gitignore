@@ -19,3 +19,8 @@ app/google-services.json
 *.apk
 *.aab
 
+
+# Service account keys / node
+serviceAccount*.json
+*-firebase-adminsdk-*.json
+node_modules/
