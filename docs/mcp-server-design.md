@@ -58,8 +58,10 @@ flowchart TB
     D -->|"đọc"| X[("seed-history.json<br/>(DATA_SOURCE=fixture)")]
 
     DB -.->|"dòng kết quả"| R
-    R -.->|"cột, dòng, loadedRange"| C
-    SC -.->|"bản mô tả lược đồ"| C
+    R -.->|"dòng kết quả"| T2
+    T2 -.->|"cột, dòng, loadedRange"| C
+    SC -.->|"văn bản mô tả"| T1
+    T1 -.->|"bản mô tả lược đồ"| C
     T3 -.->|"kết quả dự báo"| C
     T4 -.->|"kết quả ngày chậm"| C
 ```
