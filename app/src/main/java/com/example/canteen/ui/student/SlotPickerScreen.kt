@@ -148,6 +148,13 @@ fun SlotPickerScreen(
         if (uiState.isLoading) {
             LoadingBox(message = "Đang tải khung giờ...")
         } else {
+            val lunchSlots = remember(uiState.slots) {
+                uiState.slots.filter { it.startMinute < 840 }.sortedBy { it.startMinute }
+            }
+            val eveningSlots = remember(uiState.slots) {
+                uiState.slots.filter { it.startMinute >= 840 }.sortedBy { it.startMinute }
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -155,18 +162,56 @@ fun SlotPickerScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(items = uiState.slots, key = { it.id }) { slot ->
-                    val isPast = viewModel.isSlotPast(slot)
-                    val isFull = slot.isFull
-                    val isSelected = uiState.selectedSlotId == slot.id
+                if (lunchSlots.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "☀️ Buổi trưa",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurfaceVariant,
+                            letterSpacing = 0.5.sp,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+                        )
+                    }
+                    items(items = lunchSlots, key = { it.id }) { slot ->
+                        val isPast = viewModel.isSlotPast(slot)
+                        val isFull = slot.isFull
+                        val isSelected = uiState.selectedSlotId == slot.id
 
-                    SlotItemCard(
-                        slot = slot,
-                        isSelected = isSelected,
-                        isPast = isPast,
-                        isFull = isFull,
-                        onClick = { viewModel.selectSlot(slot.id) }
-                    )
+                        SlotItemCard(
+                            slot = slot,
+                            isSelected = isSelected,
+                            isPast = isPast,
+                            isFull = isFull,
+                            onClick = { viewModel.selectSlot(slot.id) }
+                        )
+                    }
+                }
+
+                if (eveningSlots.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "🌙 Chiều tối",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurfaceVariant,
+                            letterSpacing = 0.5.sp,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                        )
+                    }
+                    items(items = eveningSlots, key = { it.id }) { slot ->
+                        val isPast = viewModel.isSlotPast(slot)
+                        val isFull = slot.isFull
+                        val isSelected = uiState.selectedSlotId == slot.id
+
+                        SlotItemCard(
+                            slot = slot,
+                            isSelected = isSelected,
+                            isPast = isPast,
+                            isFull = isFull,
+                            onClick = { viewModel.selectSlot(slot.id) }
+                        )
+                    }
                 }
 
                 // Demo payment disclaimer

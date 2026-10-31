@@ -184,6 +184,7 @@ private fun DashboardTabletLayout(
         ) {
             TimeSlotsCard(
                 slots = uiState.slots,
+                scrollable = true,
                 modifier = Modifier
                     .weight(1.2f)
                     .fillMaxHeight()
@@ -544,8 +545,18 @@ private fun StatCard(
 @Composable
 private fun TimeSlotsCard(
     slots: List<DashboardSlotItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Chỉ cuộn trong thẻ khi thẻ có chiều cao cố định (tablet). Trên điện thoại cả trang đã
+    // cuộn dọc: cuộn lồng nhau sẽ crash (infinite maximum height).
+    scrollable: Boolean = false
 ) {
+    val lunchSlots = remember(slots) {
+        slots.filter { it.startMinute < 840 }.sortedBy { it.startMinute }
+    }
+    val eveningSlots = remember(slots) {
+        slots.filter { it.startMinute >= 840 }.sortedBy { it.startMinute }
+    }
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
@@ -555,7 +566,8 @@ private fun TimeSlotsCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Text(
                 text = stringResource(R.string.dashboard_slots_title).uppercase(),
@@ -564,7 +576,6 @@ private fun TimeSlotsCard(
                 color = OnSurfaceVariant,
                 letterSpacing = 0.5.sp
             )
-            Spacer(modifier = Modifier.height(8.dp))
 
             if (slots.isEmpty()) {
                 Box(
@@ -580,8 +591,30 @@ private fun TimeSlotsCard(
                     )
                 }
             } else {
-                for (slot in slots) {
-                    SlotRow(slot = slot)
+                if (lunchSlots.isNotEmpty()) {
+                    Text(
+                        text = "☀️ Buổi trưa",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+                    )
+                    for (slot in lunchSlots) {
+                        SlotRow(slot = slot)
+                    }
+                }
+
+                if (eveningSlots.isNotEmpty()) {
+                    Text(
+                        text = "🌙 Chiều tối",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                    )
+                    for (slot in eveningSlots) {
+                        SlotRow(slot = slot)
+                    }
                 }
             }
         }
@@ -593,7 +626,7 @@ private fun SlotRow(slot: DashboardSlotItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 7.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {

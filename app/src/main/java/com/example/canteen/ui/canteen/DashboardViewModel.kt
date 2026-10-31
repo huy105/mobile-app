@@ -38,7 +38,8 @@ data class DashboardSlotItem(
     val count: Int,
     val maxOrders: Int,
     val progress: Float,
-    val status: SlotCapacityStatus
+    val status: SlotCapacityStatus,
+    val startMinute: Int = 0
 )
 
 sealed interface LowStockTagType {
@@ -150,7 +151,8 @@ object DashboardCalculator {
                 count = count,
                 maxOrders = max,
                 progress = progress,
-                status = status
+                status = status,
+                startMinute = slot.startMinute
             )
         }
     }

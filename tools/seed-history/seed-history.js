@@ -69,11 +69,11 @@ const WEEKDAY_BOOST = {
   6: { 'banh-mi-thap-cam': 1.5, 'xoi-thap-cam': 1.5 },
 };
 const DAY_FACTOR = { 1: 0.9, 2: 1.0, 3: 1.0, 4: 1.0, 5: 1.1, 6: 0.55 };
-const SLOT_FILL = [0.55, 1.0, 0.85, 0.4]; // theo thứ tự khung giờ trong ngày
+const SLOT_FILL = [0.55, 1.0, 0.85, 0.4, 0.35, 0.6, 0.5, 0.25]; // theo thứ tự khung giờ trong ngày (4 khung trưa, 4 khung chiều tối)
 const DRINK_ATTACH = 0.45;
 
-// Hạn mức để tỷ lệ bán ra có ý nghĩa với 40 đơn/ngày (xem README)
-const quotaOf = (d) => d.dailyQuota || (d.category === 'Đồ uống' ? 15 : 8);
+// Hạn mức để tỷ lệ bán ra có ý nghĩa với 50-70 đơn/ngày (xem README)
+const quotaOf = (d) => d.dailyQuota || (d.category === 'Đồ uống' ? 25 : 14);
 
 const STUDENTS = [
   'Nguyễn Minh Anh', 'Trần Quốc Bảo', 'Lê Thu Hà', 'Phạm Gia Huy', 'Hoàng Ngọc Lan',

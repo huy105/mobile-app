@@ -97,7 +97,7 @@ Chi tiết các trường theo dõi, enum `CancelReason` và cách ghi từng tr
 ### Học sinh (STUDENT)
 1. **MenuScreen**: danh sách món của ngày hôm nay (lọc theo `date`), nhóm theo `category`. Món `inStock = false` làm mờ, gắn nhãn "Hết món", không thêm được. Nút thêm vào giỏ, badge số lượng trên icon giỏ.
 2. **CartScreen**: chỉnh số lượng, xóa món, hiện tổng tiền. Nút "Chọn giờ nhận".
-3. **SlotPickerScreen**: danh sách khung giờ, hiện số suất còn lại (`maxOrders` trừ `count` của `timeSlotCounters` hôm nay). Khung đã đầy thì disable. Khung đã qua giờ thì disable. Nút "Xác nhận đặt" (thanh toán giả lập, hiển thị dòng "Thanh toán tại quầy / giả lập").
+3. **SlotPickerScreen**: danh sách khung giờ, **chia hai nhóm tiêu đề "Buổi trưa" (`startMinute` < 840, tức trước 14:00) và "Chiều tối" (từ 14:00 trở đi)**, mỗi nhóm sắp theo giờ tăng dần, hiện số suất còn lại (`maxOrders` trừ `count` của `timeSlotCounters` hôm nay). Khung đã đầy thì disable. Khung đã qua giờ thì disable. Nút "Xác nhận đặt" (thanh toán giả lập, hiển thị dòng "Thanh toán tại quầy / giả lập").
 4. **OrderStatusScreen**: hiện mã nhận đồ 4 số cỡ lớn, khung giờ, danh sách món, trạng thái dạng stepper (Đã nhận → Đang chuẩn bị → Sẵn sàng → Hoàn thành), cập nhật **realtime** bằng Firestore snapshot listener. Nút "Hủy đơn" chỉ hiện khi `RECEIVED`.
 5. **HistoryScreen**: danh sách đơn của user, mới nhất trước, bấm vào xem chi tiết.
 
@@ -154,7 +154,7 @@ Quy tắc ưu tiên:
 `SeedRepository.seedIfEmpty()` chạy một lần khi `menuItems` và `timeSlots` trống (có nút ẩn hoặc gọi khi khởi động bản debug):
 
 - **Tài khoản** (tạo thủ công trên Firebase Console, hoặc seed): `student@demo.com` / `123456` (STUDENT), `canteen@demo.com` / `123456` (CANTEEN). Document `users/{uid}` tương ứng.
-- **Nguồn dữ liệu**: đọc từ **`docs/data/seed-menu.json`** (copy vào `app/src/main/assets/seed-menu.json` để app đọc lúc chạy). Gồm 10 món (4 category: Cơm, Bún/Mì, Ăn nhanh, Đồ uống; giá 15.000 - 40.000đ; 1 món `inStock = false`) và 4 khung giờ (11:15 đến 12:15, `maxOrders = 10`).
+- **Nguồn dữ liệu**: đọc từ **`docs/data/seed-menu.json`** (copy vào `app/src/main/assets/seed-menu.json` để app đọc lúc chạy). Gồm 10 món (4 category: Cơm, Bún/Mì, Ăn nhanh, Đồ uống; giá 15.000 - 40.000đ; 1 món `inStock = false`) và **8 khung giờ** rộng 15 phút, `maxOrders = 10`: 4 khung **trưa** (11:15 đến 12:15) và 4 khung **chiều tối** (17:00 đến 18:00). Cả hai buổi dùng chung thực đơn của ngày. Hạn mức mỗi món là 14 suất (đồ uống 25) để đủ cho cả hai buổi. `timeSlots` đã có sẵn trong Firestore thì `seedIfEmpty()` không tự thêm: xóa collection `timeSlots` rồi đăng nhập lại để nạp đủ 8 khung.
 - `date` của món không có trong JSON: `SeedRepository` gán bằng ngày hiện tại (yyyy-MM-dd) khi seed.
 - **Ảnh món**: `imageUrl` trong JSON là ảnh công khai trên Wikimedia Commons, chỉ dùng cho demo. Hiển thị bằng Coil (`AsyncImage`) với `crossfade`, có placeholder. Nếu `imageUrl` trống hoặc tải lỗi thì hiện ô nền `primaryContainer` kèm icon theo category (Cơm 🍚, Bún/Mì 🍜, Ăn nhanh 🥖, Đồ uống 🥤). Cần quyền `INTERNET` trong manifest.
 

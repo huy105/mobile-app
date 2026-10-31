@@ -42,6 +42,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // java.time (LocalDate...) cần desugaring trên Android 7.x (minSdk 24)
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -83,6 +85,7 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

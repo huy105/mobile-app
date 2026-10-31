@@ -249,15 +249,19 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     <div class="statusbar"><span>11:04</span><span>5G ▮▮▮</span></div>
     <div class="appbar"><div class="ic">←</div>Chọn giờ nhận</div>
     <div class="body">
+      <div class="sec" style="margin-top:0">☀️ Buổi trưa</div>
       <div class="slot full"><div><b>11:15 - 11:30</b><small>Đã qua giờ</small></div><span class="tag grey">Đã qua</span></div>
       <div class="slot sel"><div><b>11:30 - 11:45</b><small>Còn 4 suất</small></div><div class="radio"></div></div>
       <div class="slot"><div><b>11:45 - 12:00</b><small>Còn 9 suất</small></div><div class="radio"></div></div>
       <div class="slot full"><div><b>12:00 - 12:15</b><small>Đã đầy</small></div><span class="tag red">Hết suất</span></div>
+      <div class="sec">🌙 Chiều tối</div>
+      <div class="slot"><div><b>17:00 - 17:15</b><small>Còn 10 suất</small></div><div class="radio"></div></div>
+      <div class="slot"><div><b>17:15 - 17:30</b><small>Còn 10 suất</small></div><div class="radio"></div></div>
       <div class="card" style="background:var(--secondary-container);border:none;font-size:12px;margin-top:4px">💡 Thanh toán giả lập cho bản demo: trả tại quầy khi nhận đồ.</div>
     </div>
     <div class="footer"><div class="sum big" style="border:0;margin:0 0 8px;padding:0"><span>79.000đ</span><span style="font-size:13px;font-weight:600;color:var(--on-surface-variant)">11:30 - 11:45</span></div><div class="btn">Xác nhận đặt</div></div>
   </div>
-  <p class="note">Khung đầy hoặc đã qua giờ: disable, alpha 0.5. Chưa chọn khung thì nút "Xác nhận đặt" xám (disable). Lỗi transaction ("Khung giờ đã đầy", "Món X đã hết") hiện bằng Snackbar.</p></div>
+  <p class="note">Khung giờ chia hai nhóm có tiêu đề: "Buổi trưa" (4 khung, 11:15 đến 12:15) và "Chiều tối" (4 khung, 17:00 đến 18:00); danh sách cuộn dọc, mockup chỉ vẽ một phần nhóm chiều tối (còn 17:30 - 17:45 và 17:45 - 18:00 y hệt). Khung đầy hoặc đã qua giờ: disable, alpha 0.5. Chưa chọn khung thì nút "Xác nhận đặt" xám (disable). Lỗi transaction ("Khung giờ đã đầy", "Món X đã hết") hiện bằng Snackbar.</p></div>
 
   <!-- Status -->
   <div class="col"><div class="cap">S5. OrderStatusScreen</div>
@@ -307,7 +311,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
   <div class="t-main">
     <div class="rail"><div><span>📊</span>Tổng quan</div><div class="on"><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div></div>
     <div style="flex:1;display:flex;flex-direction:column;min-width:0">
-      <div class="chips" style="padding:12px 16px 0"><div class="chip on">Tất cả</div><div class="chip">11:15 - 11:30</div><div class="chip">11:30 - 11:45 (6)</div><div class="chip">11:45 - 12:00 (3)</div><div class="chip">12:00 - 12:15</div></div>
+      <div class="chips" style="padding:12px 16px 0"><div class="chip on">Tất cả</div><div class="chip">11:15 - 11:30</div><div class="chip">11:30 - 11:45 (6)</div><div class="chip">11:45 - 12:00 (3)</div><div class="chip">12:00 - 12:15</div><div class="chip">17:00 - 17:15</div><div class="chip">…</div></div>
       <div class="cols">
         <div class="kcol"><h4>Đã nhận <span class="tag blue">2</span></h4>
           <div class="order"><div class="h"><b>4821</b><span class="tag grey">11:30</span></div><p>Học sinh Demo<br>2× Cơm gà xối mỡ, 1× Trà tắc</p><div style="display:flex;gap:8px"><div class="btn sm">Bắt đầu làm</div><div class="btn sm danger">Hủy</div></div></div>
@@ -377,17 +381,23 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     <div style="flex:1;padding:16px 20px;min-width:0;display:flex;flex-direction:column;gap:14px;overflow:hidden">
       <div class="datebar"><div class="dnav">‹</div><div class="dchip">📅 Thứ Sáu, 31/10/2026 <span class="tag green">Hôm nay</span></div><div class="dnav off">›</div><div class="dnav tx">Hôm nay</div><span style="flex:1"></span><span style="font-size:12px;color:var(--on-surface-variant)">Cập nhật theo thời gian thực</span></div>
       <div class="stats">
-        <div class="stat hl"><small>Doanh thu</small><b>1.245.000đ</b><span>từ 31 đơn đã hoàn thành</span></div>
-        <div class="stat"><small>Tổng số đơn</small><b>38</b><span>4 đang xử lý · 3 đã hủy</span></div>
-        <div class="stat"><small>Suất đã bán</small><b>52</b><span>không tính đơn hủy</span></div>
+        <div class="stat hl"><small>Doanh thu</small><b>1.610.000đ</b><span>từ 41 đơn đã hoàn thành</span></div>
+        <div class="stat"><small>Tổng số đơn</small><b>48</b><span>4 đang xử lý · 3 đã hủy</span></div>
+        <div class="stat"><small>Suất đã bán</small><b>66</b><span>không tính đơn hủy</span></div>
         <div class="stat"><small>Chuẩn bị trung bình</small><b>7,5 phút</b><span>từ "Bắt đầu làm" đến "Sẵn sàng"</span></div>
       </div>
       <div style="display:flex;gap:14px;flex:1;min-height:0">
-        <div class="card" style="flex:1.2;padding:16px"><div class="sec" style="margin-top:0">Khung giờ nhận</div>
-          <div class="brow"><em>11:15 - 11:30</em><div class="bar"><i class="full" style="width:100%"></i></div><u>10/10</u><span class="tag red">Đầy</span></div>
-          <div class="brow"><em>11:30 - 11:45</em><div class="bar"><i class="full" style="width:100%"></i></div><u>10/10</u><span class="tag red">Đầy</span></div>
-          <div class="brow"><em>11:45 - 12:00</em><div class="bar"><i style="width:90%"></i></div><u>9/10</u><span class="tag amber">Gần đầy</span></div>
-          <div class="brow"><em>12:00 - 12:15</em><div class="bar"><i style="width:60%"></i></div><u>6/10</u><span class="tag green">Còn chỗ</span></div>
+        <div class="card" style="flex:1.2;padding:14px 16px;overflow:hidden"><div class="sec" style="margin-top:0;margin-bottom:4px">Khung giờ nhận</div>
+          <div style="font-size:11px;font-weight:700;color:var(--on-surface-variant);margin:2px 0">☀️ Buổi trưa</div>
+          <div class="brow" style="padding:3px 0"><em>11:15 - 11:30</em><div class="bar"><i class="full" style="width:100%"></i></div><u>10/10</u><span class="tag red">Đầy</span></div>
+          <div class="brow" style="padding:3px 0"><em>11:30 - 11:45</em><div class="bar"><i class="full" style="width:100%"></i></div><u>10/10</u><span class="tag red">Đầy</span></div>
+          <div class="brow" style="padding:3px 0"><em>11:45 - 12:00</em><div class="bar"><i class="" style="width:90%"></i></div><u>9/10</u><span class="tag amber">Gần đầy</span></div>
+          <div class="brow" style="padding:3px 0"><em>12:00 - 12:15</em><div class="bar"><i class="" style="width:60%"></i></div><u>6/10</u><span class="tag green">Còn chỗ</span></div>
+          <div style="font-size:11px;font-weight:700;color:var(--on-surface-variant);margin:6px 0 2px">🌙 Chiều tối</div>
+          <div class="brow" style="padding:3px 0"><em>17:00 - 17:15</em><div class="bar"><i class="" style="width:40%"></i></div><u>4/10</u><span class="tag green">Còn chỗ</span></div>
+          <div class="brow" style="padding:3px 0"><em>17:15 - 17:30</em><div class="bar"><i class="" style="width:30%"></i></div><u>3/10</u><span class="tag green">Còn chỗ</span></div>
+          <div class="brow" style="padding:3px 0"><em>17:30 - 17:45</em><div class="bar"><i class="" style="width:20%"></i></div><u>2/10</u><span class="tag green">Còn chỗ</span></div>
+          <div class="brow" style="padding:3px 0"><em>17:45 - 18:00</em><div class="bar"><i class="" style="width:10%"></i></div><u>1/10</u><span class="tag green">Còn chỗ</span></div>
         </div>
         <div class="card" style="flex:1;padding:16px"><div class="sec" style="margin-top:0">Món sắp hết suất</div>
           <div class="brow"><em style="flex:1;width:auto">Trà tắc</em><span class="tag red">Hết suất (15/15)</span></div>
@@ -399,7 +409,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     </div>
   </div>
 </div>
-<p class="note" style="max-width:900px">Tab <b>đầu tiên</b> của rail và là màn mở sẵn sau khi căng tin đăng nhập. Chỉ đọc, không có nút thao tác (trừ khi xem hôm nay thì bấm thẻ "Tổng số đơn" mở Đơn hàng, vùng "Món sắp hết suất" mở Thực đơn; ngày khác thì chỉ để xem). <b>Chọn ngày (thanh trên cùng của nội dung):</b> nút ‹ lùi một ngày, nút › tiến một ngày (mờ và không bấm được khi đang ở hôm nay, không cho chọn ngày tương lai), bấm vào ô ngày giữa mở <code>DatePickerDialog</code> của Material 3 (chặn ngày sau hôm nay), nút chữ "Hôm nay" quay về hôm nay và chỉ hiện khi đang xem ngày khác (mockup vẽ sẵn để thấy kiểu dáng). Ô ngày hiện thứ, ngày/tháng/năm; tag xanh "Hôm nay" chỉ hiện khi đúng hôm nay, ngày khác thì tag xám "Ngày đã qua". Dòng "Cập nhật theo thời gian thực" chỉ hiện khi xem hôm nay. Mọi số liệu bên dưới đổi theo ngày đã chọn. Khi xem ngày đã qua: tiêu đề khối bên phải đổi thành "Món hết hoặc gần hết suất", các đơn đang xử lý thường là 0. Ngày không có dữ liệu: các số hiện 0 và có dòng chữ xám "Không có đơn nào trong ngày này" ngay dưới thanh chọn ngày.<br>Dữ liệu realtime khi xem <b>hôm nay</b>. Thẻ Doanh thu nền primary, chữ trắng; ba thẻ còn lại nền surface. Thanh khung giờ: đỏ khi đầy (count &gt;= maxOrders), cam nhạt khi từ 80% trở lên (tag "Gần đầy"), còn lại primary. Danh sách món sắp hết sắp theo số suất còn lại tăng dần, tối đa 5 dòng.<br><b>Màn hẹp (&lt; 600dp, điện thoại):</b> thanh chọn ngày vẫn một hàng (‹, ô ngày co giãn, ›, nút "Hôm nay" thu thành icon ↺ khi thiếu chỗ); tab nằm trong NavigationBar dưới cùng; bốn thẻ số liệu xếp lưới 2x2, hai khối khung giờ và món sắp hết xếp dọc, toàn bộ cuộn dọc. Trạng thái rỗng (chưa có đơn nào hôm nay): các số hiện 0, "Chuẩn bị trung bình" hiện "—", mục Khung giờ vẫn hiện đủ thanh 0/maxOrders, mục món sắp hết hiện "Chưa có món nào sắp hết".</p></div>
+<p class="note" style="max-width:900px">Tab <b>đầu tiên</b> của rail và là màn mở sẵn sau khi căng tin đăng nhập. Chỉ đọc, không có nút thao tác (trừ khi xem hôm nay thì bấm thẻ "Tổng số đơn" mở Đơn hàng, vùng "Món sắp hết suất" mở Thực đơn; ngày khác thì chỉ để xem). <b>Chọn ngày (thanh trên cùng của nội dung):</b> nút ‹ lùi một ngày, nút › tiến một ngày (mờ và không bấm được khi đang ở hôm nay, không cho chọn ngày tương lai), bấm vào ô ngày giữa mở <code>DatePickerDialog</code> của Material 3 (chặn ngày sau hôm nay), nút chữ "Hôm nay" quay về hôm nay và chỉ hiện khi đang xem ngày khác (mockup vẽ sẵn để thấy kiểu dáng). Ô ngày hiện thứ, ngày/tháng/năm; tag xanh "Hôm nay" chỉ hiện khi đúng hôm nay, ngày khác thì tag xám "Ngày đã qua". Dòng "Cập nhật theo thời gian thực" chỉ hiện khi xem hôm nay. Mọi số liệu bên dưới đổi theo ngày đã chọn. Khi xem ngày đã qua: tiêu đề khối bên phải đổi thành "Món hết hoặc gần hết suất", các đơn đang xử lý thường là 0. Ngày không có dữ liệu: các số hiện 0 và có dòng chữ xám "Không có đơn nào trong ngày này" ngay dưới thanh chọn ngày.<br>Dữ liệu realtime khi xem <b>hôm nay</b>. Thẻ Doanh thu nền primary, chữ trắng; ba thẻ còn lại nền surface. Khối Khung giờ nhận chia hai nhóm "Buổi trưa" và "Chiều tối" (cùng quy tắc nhóm với S4, trước 14:00 là trưa), khối cuộn dọc nếu thiếu chỗ. Thanh khung giờ: đỏ khi đầy (count &gt;= maxOrders), cam nhạt khi từ 80% trở lên (tag "Gần đầy"), còn lại primary. Danh sách món sắp hết sắp theo số suất còn lại tăng dần, tối đa 5 dòng.<br><b>Màn hẹp (&lt; 600dp, điện thoại):</b> thanh chọn ngày vẫn một hàng (‹, ô ngày co giãn, ›, nút "Hôm nay" thu thành icon ↺ khi thiếu chỗ); tab nằm trong NavigationBar dưới cùng; bốn thẻ số liệu xếp lưới 2x2, hai khối khung giờ và món sắp hết xếp dọc, toàn bộ cuộn dọc. Trạng thái rỗng (chưa có đơn nào hôm nay): các số hiện 0, "Chuẩn bị trung bình" hiện "—", mục Khung giờ vẫn hiện đủ thanh 0/maxOrders, mục món sắp hết hiện "Chưa có món nào sắp hết".</p></div>
 
 <h2>4. Quy tắc chung cho Compose</h2>
 <div class="flow">

@@ -95,7 +95,7 @@ describe('FixtureSource', () => {
 
   it('loads timeSlots correctly matching seed-menu.json', async () => {
     const slots = await source.getTimeSlots();
-    expect(slots.length).toBe(4);
+    expect(slots.length).toBe(8);
     expect(slots[0]).toEqual({
       id: 'slot1',
       label: '11:15 - 11:30',
@@ -104,6 +104,8 @@ describe('FixtureSource', () => {
       maxOrders: 10,
     });
     expect(slots[3].id).toBe('slot4');
+    expect(slots[4]).toMatchObject({ id: 'slot5', label: '17:00 - 17:15', startMinute: 1020 });
+    expect(slots[7].id).toBe('slot8');
     expect(slots[0].startMinute).toBeLessThan(slots[1].startMinute);
   });
 

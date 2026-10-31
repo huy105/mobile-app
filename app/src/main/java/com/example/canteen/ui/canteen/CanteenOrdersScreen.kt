@@ -276,12 +276,20 @@ private fun SlotFilterChips(
     totalActiveOrders: Int,
     onSelectSlot: (String?) -> Unit
 ) {
+    val lunchSlots = remember(slots) {
+        slots.filter { it.startMinute < 840 }.sortedBy { it.startMinute }
+    }
+    val eveningSlots = remember(slots) {
+        slots.filter { it.startMinute >= 840 }.sortedBy { it.startMinute }
+    }
+
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(end = 16.dp)
+        contentPadding = PaddingValues(end = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         item {
             val isSelected = selectedSlotId == null
@@ -293,17 +301,51 @@ private fun SlotFilterChips(
             )
         }
 
-        items(slots) { slot ->
-            val isSelected = selectedSlotId == slot.id
-            val orderCount = slotOrderCounts[slot.id] ?: 0
-            val countText = if (orderCount > 0) " ($orderCount)" else ""
-            FilterChipItem(
-                label = "${slot.label}$countText",
-                isSelected = isSelected,
-                onClick = { onSelectSlot(slot.id) }
-            )
+        if (lunchSlots.isNotEmpty()) {
+            item {
+                GroupHeaderBadge(title = "☀️ Buổi trưa")
+            }
+
+            items(lunchSlots) { slot ->
+                val isSelected = selectedSlotId == slot.id
+                val orderCount = slotOrderCounts[slot.id] ?: 0
+                val countText = if (orderCount > 0) " ($orderCount)" else ""
+                FilterChipItem(
+                    label = "${slot.label}$countText",
+                    isSelected = isSelected,
+                    onClick = { onSelectSlot(slot.id) }
+                )
+            }
+        }
+
+        if (eveningSlots.isNotEmpty()) {
+            item {
+                GroupHeaderBadge(title = "🌙 Chiều tối")
+            }
+
+            items(eveningSlots) { slot ->
+                val isSelected = selectedSlotId == slot.id
+                val orderCount = slotOrderCounts[slot.id] ?: 0
+                val countText = if (orderCount > 0) " ($orderCount)" else ""
+                FilterChipItem(
+                    label = "${slot.label}$countText",
+                    isSelected = isSelected,
+                    onClick = { onSelectSlot(slot.id) }
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun GroupHeaderBadge(title: String) {
+    Text(
+        text = title,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = OnSurfaceVariant,
+        modifier = Modifier.padding(start = 6.dp, end = 2.dp)
+    )
 }
 
 @Composable

@@ -1,5 +1,5 @@
 {
-  "_note": "Dữ liệu mẫu cho SeedRepository. imageUrl lấy từ Wikimedia Commons (ảnh công khai, chỉ dùng cho demo). Field 'date' để trống: SeedRepository gán bằng ngày hiện tại (yyyy-MM-dd) khi seed. Trường mới: dishKey (mã món ổn định), tags (vegetarian, filling, quick, healthy, drink), dailyQuota (0 = không giới hạn; 8 suất món ăn, 15 suất đồ uống, khớp ~40 đơn/ngày của 4 khung giờ).",
+  "_note": "Dữ liệu mẫu cho SeedRepository. imageUrl lấy từ Wikimedia Commons (ảnh công khai, chỉ dùng cho demo). Field 'date' để trống: SeedRepository gán bằng ngày hiện tại (yyyy-MM-dd) khi seed. Trường mới: dishKey (mã món ổn định), tags (vegetarian, filling, quick, healthy, drink), dailyQuota (0 = không giới hạn; 14 suất món ăn, 25 suất đồ uống, khớp ~50-70 đơn/ngày của 8 khung giờ trưa và chiều tối).",
   "menuItems": [
     {
       "name": "Cơm sườn nướng",
@@ -12,7 +12,7 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Cơm thịt kho trứng",
@@ -25,7 +25,7 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Gà rán giòn",
@@ -38,7 +38,7 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Bún bò Huế",
@@ -51,7 +51,7 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Phở bò",
@@ -64,7 +64,7 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Mì xào",
@@ -78,7 +78,7 @@
         "quick",
         "vegetarian"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Bánh mì thập cẩm",
@@ -91,7 +91,7 @@
       "tags": [
         "quick"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Xôi thập cẩm",
@@ -105,7 +105,7 @@
         "quick",
         "filling"
       ],
-      "dailyQuota": 8
+      "dailyQuota": 14
     },
     {
       "name": "Cà phê sữa đá",
@@ -118,7 +118,7 @@
       "tags": [
         "drink"
       ],
-      "dailyQuota": 15
+      "dailyQuota": 25
     },
     {
       "name": "Trà chanh",
@@ -132,7 +132,7 @@
         "drink",
         "healthy"
       ],
-      "dailyQuota": 15
+      "dailyQuota": 25
     }
   ],
   "timeSlots": [
@@ -161,6 +161,34 @@
       "label": "12:00 - 12:15",
       "startMinute": 720,
       "endMinute": 735,
+      "maxOrders": 10,
+      "currentOrders": 0
+    },
+    {
+      "label": "17:00 - 17:15",
+      "startMinute": 1020,
+      "endMinute": 1035,
+      "maxOrders": 10,
+      "currentOrders": 0
+    },
+    {
+      "label": "17:15 - 17:30",
+      "startMinute": 1035,
+      "endMinute": 1050,
+      "maxOrders": 10,
+      "currentOrders": 0
+    },
+    {
+      "label": "17:30 - 17:45",
+      "startMinute": 1050,
+      "endMinute": 1065,
+      "maxOrders": 10,
+      "currentOrders": 0
+    },
+    {
+      "label": "17:45 - 18:00",
+      "startMinute": 1065,
+      "endMinute": 1080,
       "maxOrders": 10,
       "currentOrders": 0
     }
