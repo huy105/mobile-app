@@ -4,8 +4,23 @@ export const DEFAULT_TIMEZONE = 'Asia/Ho_Chi_Minh';
 export const MAX_DAYS_RANGE = 92;
 
 /**
- * Format a Date object to yyyy-MM-dd in the given timezone.
+ * Format a Date object to yyyy-MM-dd HH:mm:ss in the given timezone.
  */
+export function formatDateTimeInTz(date: Date, tz: string = DEFAULT_TIMEZONE): string {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const getPart = (type: string) => parts.find((p) => p.type === type)?.value || '00';
+  return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}:${getPart('second')}`;
+}
 export function formatDateInTz(date: Date, tz: string = DEFAULT_TIMEZONE): string {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,

@@ -89,7 +89,8 @@ export function computeForecast(
 
     const soldValues = recentDates.map((d) => entry.historyByDate.get(d)!);
     const avgSold = soldValues.reduce((a, b) => a + b, 0) / soldValues.length;
-    const forecast = Math.ceil(avgSold * (1 + bufferPct / 100));
+    const rawForecast = avgSold * (1 + bufferPct / 100);
+    const forecast = Math.ceil(Math.round(rawForecast * 1e6) / 1e6);
 
     let warning: string | undefined;
     if (entry.latestQuota > 0 && forecast > entry.latestQuota) {

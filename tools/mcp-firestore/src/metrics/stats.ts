@@ -21,3 +21,4 @@ export function calculateStdDev(values: number[]): { mean: number; stdDev: numbe
     stdDev: Math.round(Math.sqrt(variance) * 10) / 10,
   };
 }
+

@@ -16,10 +16,14 @@ const WEEKDAY_NAMES = [
   'Thứ bảy',
 ];
 
-export function registerForecastTool(server: McpServer, dataSource: DataSource, config: Config) {
+export function registerForecastTomorrowTool(
+  server: McpServer,
+  dataSource: DataSource,
+  config: Config
+) {
   server.tool(
     'forecast_tomorrow',
-    'Dùng khi hỏi mai nên chuẩn bị bao nhiêu suất mỗi món hoặc dự báo số lượng theo thứ trong tuần.',
+    'Dùng khi hỏi mai (hoặc một ngày tương lai) nên chuẩn bị bao nhiêu suất mỗi món; tính toán theo các ngày cùng thứ trong 4 tuần gần nhất.',
     {
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Ngày cần dự báo (yyyy-MM-dd, mặc định là ngày mai)'),
       buffer_pct: z
@@ -30,18 +34,12 @@ export function registerForecastTool(server: McpServer, dataSource: DataSource, 
         .describe('Phần trăm dự phòng phát sinh (0-50%, mặc định 10%)'),
       categories: z.array(z.string()).optional().describe('Chỉ dự báo các nhóm món này'),
       dish_keys: z.array(z.string()).optional().describe('Chỉ dự báo các món này'),
-      daypart: z.enum(['lunch', 'evening']).optional().describe('Không áp dụng cho menuItems (sẽ bị bỏ qua)'),
-      slots: z.array(z.string()).optional().describe('Không áp dụng cho menuItems (sẽ bị bỏ qua)'),
     },
     async (args) => {
       try {
         const today = getToday(config.timezone);
         const forDate = args.date || addDays(today, 1);
         const safeBuffer = args.buffer_pct !== undefined ? args.buffer_pct : 10;
-
-        const ignoredFilters: string[] = [];
-        if (args.daypart) ignoredFilters.push('daypart');
-        if (args.slots && args.slots.length > 0) ignoredFilters.push('slots');
 
         // Đọc 5 tuần gần nhất trước ngày dự báo (35 ngày)
         const fromDate = addDays(forDate, -35);
@@ -74,15 +72,7 @@ export function registerForecastTool(server: McpServer, dataSource: DataSource, 
           summary += 'Chưa đủ dữ liệu lịch sử các tuần trước để đưa ra dự báo.';
         }
 
-        const appliedFilters: Record<string, unknown> = { forDate, buffer_pct: safeBuffer };
-        if (args.categories) appliedFilters.categories = args.categories;
-        if (args.dish_keys) appliedFilters.dish_keys = args.dish_keys;
-
-        return createToolSuccess(summary, {
-          ...result,
-          appliedFilters,
-          ignoredFilters: ignoredFilters.length > 0 ? ignoredFilters : undefined,
-        } as unknown as Record<string, unknown>);
+        return createToolSuccess(summary, result as unknown as Record<string, unknown>);
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         return createToolError(msg);

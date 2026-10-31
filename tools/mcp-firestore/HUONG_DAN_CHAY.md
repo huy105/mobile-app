@@ -1,16 +1,23 @@
 # HƯỚNG DẪN CẤU HÌNH VÀ CHẠY MCP SERVER BÁO CÁO CĂNG TIN
 
-Server MCP `mcp-firestore` cung cấp **9 công cụ phân tích (1 công cụ tổng quát `query_orders` + 8 lối tắt)** giúp chủ căng tin hỏi đáp linh hoạt bằng tiếng Việt tự nhiên qua AI (Claude Desktop, Cursor, Claude Code, Windsurf).
+Server MCP `mcp-firestore` sử dụng **SQLite trong bộ nhớ** với **4 công cụ cốt lõi**, cho phép AI Assistant (Claude Desktop, Cursor, Claude Code, Windsurf) trả lời mọi câu hỏi về doanh thu, suất ăn, khung giờ, món bán chạy/ế, tỷ lệ hủy, thời gian chuẩn bị và dự báo bằng tiếng Việt.
 
-Server hỗ trợ 2 cơ chế kết nối:
-1. **Kết nối qua URL (HTTP SSE: `http://localhost:3000/sse`)** *(Khuyên dùng)*.
-2. **Kết nối qua Command (stdio)**: AI client tự khởi động tiến trình Node.
+---
+
+## 4 CÔNG CỤ CỐT LÕI
+
+| Tool | Chức năng | Khi nào nên dùng |
+|---|---|---|
+| **`get_schema`** | Xem tài liệu cấu trúc bảng, view công thức và câu SQL mẫu | **Luôn gọi đầu tiên** trong hội thoại mới trước khi truy vấn SQL |
+| **`run_sql`** | Chạy 1 câu `SELECT` (SQLite) chỉ-đọc với bảo vệ Guard 2 lớp | Mọi câu hỏi về doanh thu, món ăn, khung giờ, hủy đơn, thời gian chuẩn bị... |
+| **`forecast_tomorrow`** | Dự báo số suất món ăn cho ngày mai theo ngày cùng thứ | Hỏi *"Mai nên chuẩn bị bao nhiêu suất mỗi món?"* |
+| **`find_slow_days`** | Phát hiện ngày bếp chuẩn bị chậm bất thường (`mean + 1.5 * stdDev`) | Hỏi *"Ngày nào bếp chậm bất thường?"* |
 
 ---
 
 ## BƯỚC 1: KHỞI ĐỘNG SERVER
 
-### Cách 1: Khởi động chế độ URL (HTTP SSE)
+### Cách 1: Khởi động chế độ URL (HTTP SSE) - Khuyên dùng
 - **Windows (1-click)**: Click đúp vào file 👉 **[`run-sse.bat`](run-sse.bat)**
 - **Terminal**:
   ```powershell
@@ -33,7 +40,7 @@ Server hỗ trợ 2 cơ chế kết nối:
    - **Name**: `canteen-report`
    - **Type**: Chọn `sse`
    - **URL**: `http://localhost:3000/sse`
-3. Bấm **Add**. Cursor sẽ hiển thị chấm xanh (Connected) với đủ 9 tools.
+3. Bấm **Add**. Cursor sẽ hiển thị chấm xanh (Connected) với 4 tools.
 
 ### 2. Trong Claude Desktop
 Mở file cấu hình `%APPDATA%\Claude\claude_desktop_config.json`:
@@ -61,35 +68,31 @@ claude mcp add canteen-report http://localhost:3000/sse
 
 ---
 
-## BƯỚC 3: DANH SÁCH 9 CÔNG CỤ & CÂU HỎI MẪU
+## BƯỚC 3: CÁC CÂU HỎI MẪU CHO CHỦ CĂNG TIN
 
-### 1. Công cụ tổng quát
-- **`query_orders`**: Tự do ghép nhiều bộ lọc (`weekdays`, `daypart`, `slots`, `categories`, `dish_keys`) và nhóm theo tối đa 2 chiều (`day`, `week`, `weekday`, `daypart`, `slot`, `dish`, `category`, `cancel_reason`, `status`).
-  - *"Món nào bán chạy nhất vào thứ Sáu?"*
-  - *"Doanh thu từng thứ trong tuần khác nhau thế nào?"*
-  - *"Khung chiều tối bán gì nhiều nhất?"*
-  - *"Tỷ lệ hủy theo từng khung giờ?"*
-  - *"Đồ uống đóng góp bao nhiêu doanh thu mỗi khung giờ?"*
+Chủ quán có thể hỏi trực tiếp bằng tiếng Việt tự nhiên:
 
-### 2. Tám công cụ lối tắt
-- **`get_sales_summary`**: Doanh thu, số đơn, số suất bán, so sánh kỳ trước.
-  - *"Hôm qua bán được bao nhiêu?"*
-  - *"Tuần này doanh thu so với tuần trước thế nào?"*
-- **`get_top_items`**: Món bán chạy nhất (`best`) hoặc bán kém nhất (`worst`).
-  - *"Món nào bán chạy nhất 4 tuần qua?"*
-  - *"Món nào bán kém nhất tháng này?"*
-- **`get_orders_by_slot`**: Khung giờ đông, khung giờ hay bị đầy.
-  - *"Khung giờ nào đông nhất tuần này?"*
-  - *"Khung giờ nào hay bị đầy nhất?"*
-- **`get_cancellations`**: Đơn bị hủy, lý do hủy, ai hủy, khách không đến lấy (`NO_SHOW`).
-  - *"Bao nhiêu đơn bị hủy và vì sao?"*
-  - *"Có bao nhiêu khách không đến lấy tuần này?"*
-- **`get_prep_time_stats`**: Thời gian chuẩn bị của bếp, độ trễ nhận món, ngày chậm bất thường.
-  - *"Bếp chuẩn bị mất bao lâu, ngày nào chậm?"*
-- **`get_unsold_items`**: Món ế, món bán hết sớm.
-  - *"Món nào ế?"*
-  - *"Hôm qua món nào hết suất sớm?"*
-- **`forecast_tomorrow`**: Dự báo số suất chuẩn bị cho ngày mai theo thứ trong tuần.
-  - *"Mai nên chuẩn bị bao nhiêu suất mỗi món?"*
-- **`list_menu`**: Thực đơn trong ngày, lọc theo tag và khoảng giá.
-  - *"Hôm nay có món chay dưới 30k không?"*
+### 1. Doanh thu & Tăng trưởng
+- *"Hôm qua bán được bao nhiêu tiền và bao nhiêu đơn?"*
+- *"Doanh thu tuần này so với tuần trước thế nào?"*
+- *"Doanh thu các thứ trong tuần khác nhau ra sao?"*
+
+### 2. Món ăn & Xu hướng
+- *"Món nào bán chạy nhất vào thứ Sáu?"*
+- *"Món nào ế, có tỷ lệ bán thấp nhất?"*
+- *"Hôm nay có món chay nào dưới 30k còn suất không?"*
+- *"Đồ uống đóng góp bao nhiêu doanh thu trong mỗi khung giờ?"*
+
+### 3. Khung giờ & Vận hành
+- *"Khung giờ nào hay bị đầy nhất?"*
+- *"Khung chiều tối có đông không, có đáng mở tiếp không?"*
+- *"Bếp chuẩn bị món mất bao lâu ở từng khung giờ?"*
+- *"Những ngày nào bếp chuẩn bị chậm bất thường?"*
+
+### 4. Đơn hủy & Quản lý thất thoát
+- *"Có bao nhiêu đơn bị hủy và nguyên nhân là gì?"*
+- *"Đơn hủy vì quá tải chủ yếu tập trung vào thứ mấy?"*
+
+### 5. Dự báo chuẩn bị
+- *"Ngày mai nên chuẩn bị bao nhiêu suất mỗi món?"*
+- *"Mai là thứ Hai, có món nào cần chuẩn bị thêm so với hạn mức không?"*
