@@ -34,7 +34,12 @@
     <string name="dashboard_avg_prep_time_sub">từ \"Bắt đầu làm\" đến \"Sẵn sàng\"</string>
     <string name="dashboard_slots_title">Khung giờ nhận</string>
     <string name="dashboard_low_stock_title">Món sắp hết suất</string>
+    <string name="dashboard_low_stock_title_past">Món hết hoặc gần hết suất</string>
     <string name="dashboard_low_stock_empty">Chưa có món nào sắp hết</string>
+    <string name="dashboard_no_orders_day">Không có đơn nào trong ngày này</string>
+    <string name="tag_today">Hôm nay</string>
+    <string name="tag_past_day">Ngày đã qua</string>
+    <string name="btn_today">Hôm nay</string>
     <string name="slot_tag_full">Đầy</string>
     <string name="slot_tag_almost_full">Gần đầy</string>
     <string name="slot_tag_available">Còn chỗ</string>

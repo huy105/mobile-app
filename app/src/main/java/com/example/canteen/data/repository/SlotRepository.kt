@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface SlotRepository {
     fun getTimeSlots(): Flow<List<TimeSlot>>
+    fun getTimeSlots(date: String): Flow<List<TimeSlot>>
     suspend fun getSlotById(slotId: String): TimeSlot?
 }
 

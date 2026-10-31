@@ -18,10 +18,13 @@ class SlotRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : SlotRepository {
 
-    /** Slots with `currentOrders` taken from today's counters, so capacity resets every day. */
     override fun getTimeSlots(): Flow<List<TimeSlot>> {
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        return combine(slotDefinitions(), todayCounters(today)) { slots, counters ->
+        return getTimeSlots(today)
+    }
+
+    override fun getTimeSlots(date: String): Flow<List<TimeSlot>> {
+        return combine(slotDefinitions(), todayCounters(date)) { slots, counters ->
             slots.map { it.copy(currentOrders = counters[it.id] ?: 0) }
         }
     }

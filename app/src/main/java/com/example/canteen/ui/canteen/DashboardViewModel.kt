@@ -11,16 +11,18 @@ import com.example.canteen.data.repository.OrderRepository
 import com.example.canteen.data.repository.SlotRepository
 import com.example.canteen.ui.common.util.formatVnd
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
@@ -55,6 +57,9 @@ data class DashboardLowStockItem(
 
 data class DashboardUiState(
     val isLoading: Boolean = true,
+    val selectedDate: LocalDate = LocalDate.now(),
+    val isToday: Boolean = true,
+    val hasOrders: Boolean = true,
     val revenue: Long = 0L,
     val completedOrdersCount: Int = 0,
     val totalOrdersCount: Int = 0,
@@ -194,23 +199,23 @@ object DashboardCalculator {
         return candidates.sortedBy { it.remainingQty }.take(5)
     }
 
-    fun formatDateHeader(date: Date = Date()): String {
-        val cal = Calendar.getInstance().apply { time = date }
-        val dayOfWeek = when (cal.get(Calendar.DAY_OF_WEEK)) {
-            Calendar.SUNDAY -> "Chủ Nhật"
-            Calendar.MONDAY -> "Thứ Hai"
-            Calendar.TUESDAY -> "Thứ Ba"
-            Calendar.WEDNESDAY -> "Thứ Tư"
-            Calendar.THURSDAY -> "Thứ Năm"
-            Calendar.FRIDAY -> "Thứ Sáu"
-            Calendar.SATURDAY -> "Thứ Bảy"
-            else -> ""
+    fun formatChipDate(date: LocalDate): String {
+        val dayOfWeek = when (date.dayOfWeek) {
+            DayOfWeek.MONDAY -> "Thứ Hai"
+            DayOfWeek.TUESDAY -> "Thứ Ba"
+            DayOfWeek.WEDNESDAY -> "Thứ Tư"
+            DayOfWeek.THURSDAY -> "Thứ Năm"
+            DayOfWeek.FRIDAY -> "Thứ Sáu"
+            DayOfWeek.SATURDAY -> "Thứ Bảy"
+            DayOfWeek.SUNDAY -> "Chủ Nhật"
+            null -> ""
         }
-        val dayMonth = SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
-        return "Hôm nay · $dayOfWeek, $dayMonth"
+        val dateFormatted = date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        return "📅 $dayOfWeek, $dateFormatted"
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
@@ -218,54 +223,84 @@ class DashboardViewModel @Inject constructor(
     private val slotRepository: SlotRepository
 ) : ViewModel() {
 
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
+
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
-
-    private val todayDate: String
-        get() = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
     init {
         loadDashboardData()
     }
 
+    fun selectDate(date: LocalDate) {
+        val today = LocalDate.now()
+        val target = if (date.isAfter(today)) today else date
+        _selectedDate.value = target
+    }
+
+    fun previousDay() {
+        _selectedDate.value = _selectedDate.value.minusDays(1)
+    }
+
+    fun nextDay() {
+        val today = LocalDate.now()
+        val current = _selectedDate.value
+        if (current.isBefore(today)) {
+            val next = current.plusDays(1)
+            if (!next.isAfter(today)) {
+                _selectedDate.value = next
+            }
+        }
+    }
+
+    fun resetToToday() {
+        _selectedDate.value = LocalDate.now()
+    }
+
     private fun loadDashboardData() {
-        val today = todayDate
-        val formattedDate = DashboardCalculator.formatDateHeader()
-
         viewModelScope.launch {
-            combine(
-                orderRepository.getTodayOrders(today),
-                menuRepository.getTodayMenuItems(today),
-                slotRepository.getTimeSlots()
-            ) { orders, menuItems, slots ->
-                val revenue = DashboardCalculator.calculateRevenue(orders)
-                val completedCount = DashboardCalculator.calculateCompletedOrdersCount(orders)
-                val (total, inProgress, cancelled) = DashboardCalculator.calculateTotalOrders(orders)
-                val itemsSold = DashboardCalculator.calculateItemsSold(orders)
-                val avgPrepTime = DashboardCalculator.calculateAvgPrepTime(orders)
-                val slotItems = DashboardCalculator.computeSlotStatus(slots)
-                val lowStockList = DashboardCalculator.computeLowStockItems(menuItems)
+            _selectedDate.flatMapLatest { date ->
+                val dateStr = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                val isToday = date.isEqual(LocalDate.now())
+                val formattedDate = DashboardCalculator.formatChipDate(date)
 
-                DashboardUiState(
-                    isLoading = false,
-                    revenue = revenue,
-                    completedOrdersCount = completedCount,
-                    totalOrdersCount = total,
-                    inProgressOrdersCount = inProgress,
-                    cancelledOrdersCount = cancelled,
-                    itemsSoldCount = itemsSold,
-                    avgPrepTimeText = avgPrepTime,
-                    slots = slotItems,
-                    lowStockItems = lowStockList,
-                    formattedDate = formattedDate,
-                    errorMessage = null
-                )
+                combine(
+                    orderRepository.getTodayOrders(dateStr),
+                    menuRepository.getTodayMenuItems(dateStr),
+                    slotRepository.getTimeSlots(dateStr)
+                ) { orders, menuItems, slots ->
+                    val revenue = DashboardCalculator.calculateRevenue(orders)
+                    val completedCount = DashboardCalculator.calculateCompletedOrdersCount(orders)
+                    val (total, inProgress, cancelled) = DashboardCalculator.calculateTotalOrders(orders)
+                    val itemsSold = DashboardCalculator.calculateItemsSold(orders)
+                    val avgPrepTime = DashboardCalculator.calculateAvgPrepTime(orders)
+                    val slotItems = DashboardCalculator.computeSlotStatus(slots)
+                    val lowStockList = DashboardCalculator.computeLowStockItems(menuItems)
+
+                    DashboardUiState(
+                        isLoading = false,
+                        selectedDate = date,
+                        isToday = isToday,
+                        hasOrders = orders.isNotEmpty(),
+                        revenue = revenue,
+                        completedOrdersCount = completedCount,
+                        totalOrdersCount = total,
+                        inProgressOrdersCount = inProgress,
+                        cancelledOrdersCount = cancelled,
+                        itemsSoldCount = itemsSold,
+                        avgPrepTimeText = avgPrepTime,
+                        slots = slotItems,
+                        lowStockItems = lowStockList,
+                        formattedDate = formattedDate,
+                        errorMessage = null
+                    )
+                }
             }.catch { e ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        errorMessage = e.message ?: "Đã xảy ra lỗi khi tải dữ liệu",
-                        formattedDate = formattedDate
+                        errorMessage = e.message ?: "Đã xảy ra lỗi khi tải dữ liệu"
                     )
                 }
             }.collect { state ->
@@ -274,4 +309,3 @@ class DashboardViewModel @Inject constructor(
         }
     }
 }
-

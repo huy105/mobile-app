@@ -134,6 +134,11 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
 .stat span{font-size:12px;color:var(--on-surface-variant)}
 .stat.hl{background:var(--primary);border-color:var(--primary)}
 .stat.hl small,.stat.hl span{color:#fff;opacity:.9}.stat.hl b{color:#fff}
+.datebar{display:flex;align-items:center;gap:8px}
+.dnav{width:40px;height:40px;border-radius:12px;border:1.5px solid var(--outline);background:var(--surface);display:grid;place-items:center;font-size:22px;font-weight:700;flex:none}
+.dnav.off{opacity:.4}
+.dnav.tx{width:auto;padding:0 14px;font-size:13px;font-weight:700;color:var(--primary);border-color:var(--primary)}
+.dchip{height:40px;padding:0 16px;border-radius:12px;border:1.5px solid var(--outline);background:var(--surface);display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;white-space:nowrap}
 .bar{height:10px;border-radius:5px;background:var(--surface-variant);overflow:hidden;flex:1}
 .bar i{display:block;height:100%;border-radius:5px;background:var(--primary)}
 .bar i.full{background:var(--error)}
@@ -370,7 +375,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
   <div class="t-main">
     <div class="rail"><div class="on"><span>📊</span>Tổng quan</div><div><span>📋</span>Đơn hàng</div><div><span>🍽</span>Thực đơn</div><div><span>✅</span>Trả đồ</div></div>
     <div style="flex:1;padding:16px 20px;min-width:0;display:flex;flex-direction:column;gap:14px;overflow:hidden">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:18px;font-weight:800">Hôm nay · Thứ Sáu, 31/10</div><span style="font-size:12px;color:var(--on-surface-variant)">Cập nhật theo thời gian thực</span></div>
+      <div class="datebar"><div class="dnav">‹</div><div class="dchip">📅 Thứ Sáu, 31/10/2026 <span class="tag green">Hôm nay</span></div><div class="dnav off">›</div><div class="dnav tx">Hôm nay</div><span style="flex:1"></span><span style="font-size:12px;color:var(--on-surface-variant)">Cập nhật theo thời gian thực</span></div>
       <div class="stats">
         <div class="stat hl"><small>Doanh thu</small><b>1.245.000đ</b><span>từ 31 đơn đã hoàn thành</span></div>
         <div class="stat"><small>Tổng số đơn</small><b>38</b><span>4 đang xử lý · 3 đã hủy</span></div>
@@ -394,7 +399,7 @@ h2{font-size:20px;font-weight:700;margin:40px 0 16px}
     </div>
   </div>
 </div>
-<p class="note" style="max-width:900px">Tab <b>đầu tiên</b> của rail và là màn mở sẵn sau khi căng tin đăng nhập. Chỉ đọc, không có nút thao tác (trừ bấm một thẻ để chuyển tab liên quan: thẻ "Tổng số đơn" mở Đơn hàng, vùng "Món sắp hết suất" mở Thực đơn). Dữ liệu realtime, chỉ của <b>hôm nay</b>. Thẻ Doanh thu nền primary, chữ trắng; ba thẻ còn lại nền surface. Thanh khung giờ: đỏ khi đầy (count &gt;= maxOrders), cam nhạt khi từ 80% trở lên (tag "Gần đầy"), còn lại primary. Danh sách món sắp hết sắp theo số suất còn lại tăng dần, tối đa 5 dòng.<br><b>Màn hẹp (&lt; 600dp, điện thoại):</b> tab nằm trong NavigationBar dưới cùng; bốn thẻ số liệu xếp lưới 2x2, hai khối khung giờ và món sắp hết xếp dọc, toàn bộ cuộn dọc. Trạng thái rỗng (chưa có đơn nào hôm nay): các số hiện 0, "Chuẩn bị trung bình" hiện "—", mục Khung giờ vẫn hiện đủ thanh 0/maxOrders, mục món sắp hết hiện "Chưa có món nào sắp hết".</p></div>
+<p class="note" style="max-width:900px">Tab <b>đầu tiên</b> của rail và là màn mở sẵn sau khi căng tin đăng nhập. Chỉ đọc, không có nút thao tác (trừ khi xem hôm nay thì bấm thẻ "Tổng số đơn" mở Đơn hàng, vùng "Món sắp hết suất" mở Thực đơn; ngày khác thì chỉ để xem). <b>Chọn ngày (thanh trên cùng của nội dung):</b> nút ‹ lùi một ngày, nút › tiến một ngày (mờ và không bấm được khi đang ở hôm nay, không cho chọn ngày tương lai), bấm vào ô ngày giữa mở <code>DatePickerDialog</code> của Material 3 (chặn ngày sau hôm nay), nút chữ "Hôm nay" quay về hôm nay và chỉ hiện khi đang xem ngày khác (mockup vẽ sẵn để thấy kiểu dáng). Ô ngày hiện thứ, ngày/tháng/năm; tag xanh "Hôm nay" chỉ hiện khi đúng hôm nay, ngày khác thì tag xám "Ngày đã qua". Dòng "Cập nhật theo thời gian thực" chỉ hiện khi xem hôm nay. Mọi số liệu bên dưới đổi theo ngày đã chọn. Khi xem ngày đã qua: tiêu đề khối bên phải đổi thành "Món hết hoặc gần hết suất", các đơn đang xử lý thường là 0. Ngày không có dữ liệu: các số hiện 0 và có dòng chữ xám "Không có đơn nào trong ngày này" ngay dưới thanh chọn ngày.<br>Dữ liệu realtime khi xem <b>hôm nay</b>. Thẻ Doanh thu nền primary, chữ trắng; ba thẻ còn lại nền surface. Thanh khung giờ: đỏ khi đầy (count &gt;= maxOrders), cam nhạt khi từ 80% trở lên (tag "Gần đầy"), còn lại primary. Danh sách món sắp hết sắp theo số suất còn lại tăng dần, tối đa 5 dòng.<br><b>Màn hẹp (&lt; 600dp, điện thoại):</b> thanh chọn ngày vẫn một hàng (‹, ô ngày co giãn, ›, nút "Hôm nay" thu thành icon ↺ khi thiếu chỗ); tab nằm trong NavigationBar dưới cùng; bốn thẻ số liệu xếp lưới 2x2, hai khối khung giờ và món sắp hết xếp dọc, toàn bộ cuộn dọc. Trạng thái rỗng (chưa có đơn nào hôm nay): các số hiện 0, "Chuẩn bị trung bình" hiện "—", mục Khung giờ vẫn hiện đủ thanh 0/maxOrders, mục món sắp hết hiện "Chưa có món nào sắp hết".</p></div>
 
 <h2>4. Quy tắc chung cho Compose</h2>
 <div class="flow">

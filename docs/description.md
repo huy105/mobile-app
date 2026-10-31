@@ -104,15 +104,18 @@ Chi tiết các trường theo dõi, enum `CancelReason` và cách ghi từng tr
 Bottom navigation cho học sinh: Menu, Giỏ hàng, Đơn của tôi.
 
 ### Căng tin (CANTEEN)
-0. **DashboardScreen** (tab "Tổng quan", mở sẵn sau khi đăng nhập, chỉ đọc, realtime, chỉ dữ liệu **hôm nay**). Layout xem mục C5 trong `docs/design/design.html`. Không tạo collection hay trường mới, mọi số liệu tính từ `orders` hôm nay (`date` = ngày hiện tại), `menuItems` hôm nay và `timeSlotCounters` hôm nay mà app đã có. Công thức (đặt trong `DashboardViewModel`, hàm thuần dễ test):
+0. **DashboardScreen** (tab "Tổng quan", mở sẵn sau khi đăng nhập, chỉ đọc, realtime). Mặc định xem **hôm nay**, có thể **chọn ngày khác** (xem bên dưới). Layout xem mục C5 trong `docs/design/design.html`. Không tạo collection hay trường mới, mọi số liệu tính từ `orders`, `menuItems` và `timeSlotCounters` của **ngày đang chọn** (`date` = ngày đó, mặc định hôm nay) mà app đã có. Công thức (đặt trong `DashboardViewModel`, hàm thuần dễ test):
    - **Doanh thu** = tổng `total` của đơn `COMPLETED`; phụ đề "từ N đơn đã hoàn thành".
    - **Tổng số đơn** = số đơn hôm nay ở mọi trạng thái; phụ đề "X đang xử lý (RECEIVED, PREPARING, READY) · Y đã hủy (CANCELLED)".
    - **Suất đã bán** = tổng `quantity` của các món trong đơn không phải `CANCELLED`.
-   - **Chuẩn bị trung bình** = trung bình `readyAt - preparingAt` (phút, 1 chữ số thập phân, dấu phẩy) của đơn hôm nay có đủ hai mốc; không có đơn nào đủ thì hiện "—". Không bịa số.
-   - **Khung giờ nhận**: mỗi `timeSlots` một dòng `count/maxOrders` với `count` lấy từ `timeSlotCounters/{slotId}_{hôm nay}` (thiếu thì 0). Đầy khi `count >= maxOrders` (đỏ, tag "Đầy"), từ 80% trở lên là "Gần đầy" (cam), còn lại "Còn chỗ" (xanh).
-   - **Món sắp hết suất**: món hôm nay có `dailyQuota > 0` và còn lại (`dailyQuota - soldQty`) từ 0 đến 3 suất; hết suất ghi "Hết suất (X/X)", còn lại ghi "Còn N suất". Món `inStock = false` mà không phải do hết suất thì ghi "Đã tắt (hết món)". Sắp theo số suất còn lại tăng dần, tối đa 5 dòng; rỗng thì "Chưa có món nào sắp hết".
+   - **Chuẩn bị trung bình** = trung bình `readyAt - preparingAt` (phút, 1 chữ số thập phân, dấu phẩy) của đơn của ngày chọn có đủ hai mốc; không có đơn nào đủ thì hiện "—". Không bịa số.
+   - **Khung giờ nhận**: mỗi `timeSlots` một dòng `count/maxOrders` với `count` lấy từ `timeSlotCounters/{slotId}_{ngày chọn}` (thiếu thì 0). Đầy khi `count >= maxOrders` (đỏ, tag "Đầy"), từ 80% trở lên là "Gần đầy" (cam), còn lại "Còn chỗ" (xanh).
+   - **Món sắp hết suất**: món của ngày chọn có `dailyQuota > 0` và còn lại (`dailyQuota - soldQty`) từ 0 đến 3 suất; hết suất ghi "Hết suất (X/X)", còn lại ghi "Còn N suất". Món `inStock = false` mà không phải do hết suất thì ghi "Đã tắt (hết món)". Sắp theo số suất còn lại tăng dần, tối đa 5 dòng; rỗng thì "Chưa có món nào sắp hết".
    - Thiếu các trường của `docs/analytics-data-plan.md` (đơn cũ không có `preparingAt`/`readyAt`, món `dailyQuota = 0`) thì bỏ qua phần tính tương ứng, không crash.
-   - Bấm thẻ "Tổng số đơn" chuyển sang tab Đơn hàng; bấm khối "Món sắp hết suất" chuyển sang tab Thực đơn.
+   - **Chọn ngày**: thanh trên cùng có nút ‹ (lùi 1 ngày), nút › (tiến 1 ngày), ô ngày bấm mở `DatePickerDialog` Material 3, và nút "Hôm nay" (chỉ hiện khi đang xem ngày khác). Không cho chọn ngày sau hôm nay (nút › mờ và disable khi đang ở hôm nay, `DatePicker` dùng `SelectableDates` chặn ngày tương lai). Ngày chọn lưu trong `DashboardViewModel` (`MutableStateFlow<LocalDate>`, theo múi giờ máy, định dạng `yyyy-MM-dd` khi truy vấn); khi ngày đổi thì hủy listener cũ và nghe lại theo ngày mới (`flatMapLatest`). Mỗi lần đăng nhập mở lại thì về hôm nay.
+   - Truy vấn theo ngày: `orders.whereEqualTo("date", d)`, `menuItems.whereEqualTo("date", d)`, `timeSlotCounters` đọc theo id `{slotId}_{d}`. Chỉ lọc một trường nên không cần composite index.
+   - Ngày đã qua: `timeSlots` lấy từ định nghĩa hiện tại; tiêu đề khối món đổi thành "Món hết hoặc gần hết suất"; tag trạng thái ngày là "Ngày đã qua" (xám) thay vì "Hôm nay" (xanh); dòng "Cập nhật theo thời gian thực" ẩn. Không có đơn nào trong ngày thì các số về 0 và hiện dòng "Không có đơn nào trong ngày này". Dữ liệu lịch sử giả (`docs/data/seed-history.json`, nạp bằng `tools/seed-history`) dùng để thử tính năng này.
+   - Bấm thẻ "Tổng số đơn" chuyển sang tab Đơn hàng; bấm khối "Món sắp hết suất" chuyển sang tab Thực đơn (hai tab đó luôn là dữ liệu hôm nay, nên khi đang xem ngày khác thì không điều hướng, hai vùng này chỉ để xem).
 1. **OrdersScreen**: đơn của hôm nay, realtime, hiển thị dạng 3 cột theo trạng thái (Đã nhận, Đang chuẩn bị, Sẵn sàng lấy) và có chip lọc theo khung giờ. Mỗi đơn hiện mã, tên khách, món. Nút chuyển trạng thái tiếp theo (RECEIVED → PREPARING → READY). Có thể hủy đơn.
 2. **MenuManageScreen**: danh sách món hôm nay, Switch bật/tắt `inStock`.
 3. **VerifyCodeScreen**: ô nhập mã 4 số. Khớp đơn `READY` của hôm nay thì chuyển `COMPLETED` và báo thành công; sai mã hoặc đơn chưa READY thì báo lỗi rõ ràng.
@@ -210,7 +213,7 @@ Quy tắc ưu tiên:
 - [ ] Học sinh hủy đơn `RECEIVED` thì suất khung giờ được trả lại.
 - [ ] Có trạng thái loading, rỗng và lỗi ở các màn hình danh sách.
 - [ ] Mọi tiêu chí trong mục 7 của `docs/analytics-data-plan.md` đều đạt (dữ liệu phân tích, hộp thoại hủy, số suất mỗi món).
-- [ ] Tab Tổng quan (C5) là tab đầu tiên, mở sẵn sau khi căng tin đăng nhập; bốn số liệu, khung giờ và món sắp hết khớp công thức ở mục 5 và cập nhật realtime khi có đơn mới.
+- [ ] Tab Tổng quan (C5) là tab đầu tiên, mở sẵn sau khi căng tin đăng nhập; bốn số liệu, khung giờ và món sắp hết khớp công thức ở mục 5 và cập nhật realtime khi có đơn mới (khi xem hôm nay). Chọn được ngày đã qua (không chọn được ngày tương lai); số liệu đổi đúng theo ngày chọn, thử được với dữ liệu lịch sử giả.
 - [ ] Giao diện của 11 màn hình khớp `docs/design/design.html` (màu, font, bo góc, bố cục); luồng căng tin dùng NavigationRail trên tablet.
 
 ## 10. Hướng mở rộng (ngoài demo)
