@@ -65,3 +65,4 @@ export function computeCancellations(orders: Order[]): CancellationsResult {
     noShow,
   };
 }
+

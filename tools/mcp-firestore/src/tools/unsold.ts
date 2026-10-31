@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { DataSource } from '../data/dataSource.js';
 import { Config } from '../config.js';
-import { resolveDateRange } from '../util/dates.js';
+import { resolveDateRange, getIsoWeekday } from '../util/dates.js';
 import { computeUnsoldItems } from '../metrics/items.js';
 import { createToolSuccess, createToolError, formatPercent } from '../util/format.js';
 
@@ -13,6 +13,11 @@ export function registerUnsoldTool(server: McpServer, dataSource: DataSource, co
     {
       date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Ngày bắt đầu (yyyy-MM-dd)'),
       date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Ngày kết thúc (yyyy-MM-dd)'),
+      weekdays: z.array(z.number().int().min(1).max(7)).optional().describe('Thứ trong tuần (1 = Thứ Hai, 7 = Chủ nhật)'),
+      categories: z.array(z.string()).optional().describe('Danh sách nhóm món'),
+      dish_keys: z.array(z.string()).optional().describe('Danh sách mã món dishKey'),
+      daypart: z.enum(['lunch', 'evening']).optional().describe('Không áp dụng cho menuItems (sẽ bị bỏ qua)'),
+      slots: z.array(z.string()).optional().describe('Không áp dụng cho menuItems (sẽ bị bỏ qua)'),
       threshold: z
         .number()
         .min(0)
@@ -20,13 +25,33 @@ export function registerUnsoldTool(server: McpServer, dataSource: DataSource, co
         .optional()
         .describe('Ngưỡng tỷ lệ bán để coi là ế (0..1, mặc định 0.5 tức 50%)'),
     },
-    async ({ date_from, date_to, threshold }) => {
+    async (args) => {
       try {
-        const range = resolveDateRange(date_from, date_to, config.timezone);
-        const menuItems = await dataSource.getMenuItems(range);
+        const range = resolveDateRange(args.date_from, args.date_to, config.timezone);
+        const rawMenuItems = await dataSource.getMenuItems(range);
 
-        const safeThreshold = threshold !== undefined ? threshold : 0.5;
-        const items = computeUnsoldItems(menuItems, safeThreshold);
+        const ignoredFilters: string[] = [];
+        if (args.daypart) ignoredFilters.push('daypart');
+        if (args.slots && args.slots.length > 0) ignoredFilters.push('slots');
+
+        // Lọc menuItems theo weekdays, categories, dish_keys
+        const filteredMenuItems = rawMenuItems.filter((m) => {
+          if (args.weekdays && args.weekdays.length > 0) {
+            const w = getIsoWeekday(m.date);
+            if (!args.weekdays.includes(w)) return false;
+          }
+          if (args.categories && args.categories.length > 0) {
+            if (!args.categories.includes(m.category || '')) return false;
+          }
+          if (args.dish_keys && args.dish_keys.length > 0) {
+            const key = m.dishKey || m.name;
+            if (!args.dish_keys.includes(key) && !args.dish_keys.includes(m.name)) return false;
+          }
+          return true;
+        });
+
+        const safeThreshold = args.threshold !== undefined ? args.threshold : 0.5;
+        const items = computeUnsoldItems(filteredMenuItems, safeThreshold);
 
         const unSoldList = items.filter((i) => i.status === 'ế');
         const soldOutList = items.filter((i) => i.status === 'bán hết sớm');
@@ -49,9 +74,19 @@ export function registerUnsoldTool(server: McpServer, dataSource: DataSource, co
             .join(', ')}.`;
         }
 
+        const appliedFilters: Record<string, unknown> = { range };
+        if (args.weekdays) appliedFilters.weekdays = args.weekdays;
+        if (args.categories) appliedFilters.categories = args.categories;
+        if (args.dish_keys) appliedFilters.dish_keys = args.dish_keys;
+
         return createToolSuccess(
           summary,
-          { range, threshold: safeThreshold, items } as unknown as Record<string, unknown>
+          {
+            appliedFilters,
+            ignoredFilters: ignoredFilters.length > 0 ? ignoredFilters : undefined,
+            threshold: safeThreshold,
+            items,
+          } as unknown as Record<string, unknown>
         );
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);

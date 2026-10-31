@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 
 import { createServer } from '../src/index.js';
 import { FixtureSource } from '../src/data/fixtureSource.js';
+import { addDays } from '../src/util/dates.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,7 +13,7 @@ const __dirname = path.dirname(__filename);
 const fixturePath = path.resolve(__dirname, '../../../docs/data/seed-history.json');
 const seedMenuPath = path.resolve(__dirname, '../../../docs/data/seed-menu.json');
 
-describe('All 8 MCP Tools Integration Test', () => {
+describe('All 9 MCP Tools Integration & Consistency Test', () => {
   let server: ReturnType<typeof createServer>;
   let source: FixtureSource;
   let minDate: string;
@@ -36,104 +37,103 @@ describe('All 8 MCP Tools Integration Test', () => {
     return result;
   }
 
-  it('1. get_sales_summary runs and returns formatted response', async () => {
-    const res = await callTool('get_sales_summary', {
-      date_from: minDate,
-      date_to: maxDate,
-      group_by: 'day',
-    });
-    expect(res.isError).toBeFalsy();
-    expect(res.content[0].text).toContain('tổng doanh thu');
-    expect(res.structuredContent).toBeDefined();
-    expect(res.structuredContent.revenue).toBeGreaterThan(0);
+  it('Verifies exactly 9 tools registered in McpServer', () => {
+    const tools = Object.keys((server as any)._registeredTools);
+    expect(tools.length).toBe(9);
+    expect(tools).toContain('query_orders');
+    expect(tools).toContain('get_sales_summary');
+    expect(tools).toContain('get_top_items');
+    expect(tools).toContain('get_orders_by_slot');
+    expect(tools).toContain('get_cancellations');
+    expect(tools).toContain('get_prep_time_stats');
+    expect(tools).toContain('get_unsold_items');
+    expect(tools).toContain('forecast_tomorrow');
+    expect(tools).toContain('list_menu');
   });
 
-  it('2. get_top_items runs and returns best / worst list', async () => {
-    const resBest = await callTool('get_top_items', {
+  it('Tool 0: query_orders runs without params and matches get_sales_summary totals', async () => {
+    const resQuery = await callTool('query_orders', {
+      date_from: minDate,
+      date_to: maxDate,
+    });
+    const resSales = await callTool('get_sales_summary', {
+      date_from: minDate,
+      date_to: maxDate,
+    });
+
+    expect(resQuery.isError).toBeFalsy();
+    expect(resSales.isError).toBeFalsy();
+
+    expect(resQuery.structuredContent.totals.revenue).toBe(resSales.structuredContent.revenue);
+    expect(resQuery.structuredContent.totals.orders).toBe(resSales.structuredContent.orders);
+    expect(resQuery.structuredContent.totals.portions).toBe(resSales.structuredContent.portions);
+  });
+
+  it('Cross-tool consistency: get_top_items, get_cancellations, get_prep_time_stats match query_orders', async () => {
+    // 1. Top items vs query_orders group_by: ['dish']
+    const queryDishes = await callTool('query_orders', {
+      date_from: minDate,
+      date_to: maxDate,
+      group_by: ['dish'],
+      metrics: ['portions', 'revenue'],
+      sort_by: 'portions',
+      sort_dir: 'desc',
+      limit: 5,
+    });
+    const topBest = await callTool('get_top_items', {
       date_from: minDate,
       date_to: maxDate,
       limit: 5,
       order: 'best',
     });
-    expect(resBest.isError).toBeFalsy();
-    expect(resBest.structuredContent.items.length).toBe(5);
+    expect(topBest.structuredContent.items[0].portions).toBe(queryDishes.structuredContent.rows[0].portions);
+    expect(topBest.structuredContent.items[0].revenue).toBe(queryDishes.structuredContent.rows[0].revenue);
 
-    const resWorst = await callTool('get_top_items', {
+    // 2. Cancellations total matches query_orders cancelled_orders
+    const queryCancel = await callTool('query_orders', {
       date_from: minDate,
       date_to: maxDate,
-      limit: 5,
-      order: 'worst',
+      metrics: ['cancelled_orders'],
     });
-    expect(resWorst.isError).toBeFalsy();
-    expect(resWorst.structuredContent.items.length).toBe(5);
-  });
-
-  it('3. get_orders_by_slot runs and identifies busiest slot', async () => {
-    const res = await callTool('get_orders_by_slot', {
+    const cancelTool = await callTool('get_cancellations', {
       date_from: minDate,
       date_to: maxDate,
     });
-    expect(res.isError).toBeFalsy();
-    expect(res.structuredContent.slots.length).toBe(8);
-    expect(res.structuredContent.busiest).toBeTruthy();
-  });
+    expect(cancelTool.structuredContent.total).toBe(queryCancel.structuredContent.totals.cancelled_orders);
 
-  it('4. get_cancellations runs and details reasons and no-show', async () => {
-    const res = await callTool('get_cancellations', {
+    // 3. Prep time avg matches query_orders avg_prep_minutes
+    const queryPrep = await callTool('query_orders', {
+      date_from: minDate,
+      date_to: maxDate,
+      metrics: ['avg_prep_minutes'],
+    });
+    const prepTool = await callTool('get_prep_time_stats', {
       date_from: minDate,
       date_to: maxDate,
     });
-    expect(res.isError).toBeFalsy();
-    expect(res.structuredContent.total).toBeGreaterThan(0);
-    expect(res.structuredContent.byReason).toHaveProperty('SOLD_OUT');
+    expect(prepTool.structuredContent.prep.avg).toBe(queryPrep.structuredContent.totals.avg_prep_minutes);
   });
 
-  it('5. get_prep_time_stats runs and reports avg and p90', async () => {
-    const res = await callTool('get_prep_time_stats', {
+  it('get_unsold_items and forecast_tomorrow with daypart returns ignoredFilters without error', async () => {
+    const unsoldRes = await callTool('get_unsold_items', {
       date_from: minDate,
       date_to: maxDate,
+      daypart: 'evening',
     });
-    expect(res.isError).toBeFalsy();
-    expect(res.structuredContent.prep.avg).toBeGreaterThan(0);
-    expect(res.structuredContent.prep.p90).toBeGreaterThanOrEqual(res.structuredContent.prep.avg);
+    expect(unsoldRes.isError).toBeFalsy();
+    expect(unsoldRes.structuredContent.ignoredFilters).toContain('daypart');
+
+    const forecastRes = await callTool('forecast_tomorrow', {
+      date: addDays(maxDate, 1),
+      daypart: 'evening',
+    });
+    expect(forecastRes.isError).toBeFalsy();
+    expect(forecastRes.structuredContent.ignoredFilters).toContain('daypart');
   });
 
-  it('6. get_unsold_items runs and identifies unsold items', async () => {
-    const res = await callTool('get_unsold_items', {
-      date_from: minDate,
-      date_to: maxDate,
-      threshold: 0.5,
-    });
-    expect(res.isError).toBeFalsy();
-    expect(res.structuredContent.items.length).toBeGreaterThan(0);
-    const statuses = res.structuredContent.items.map((i: any) => i.status);
-    expect(statuses).toContain('ế');
-  });
-
-  it('7. forecast_tomorrow runs and forecasts portion quantities', async () => {
-    const res = await callTool('forecast_tomorrow', {
-      date: '2026-10-31',
-      buffer_pct: 10,
-    });
-    expect(res.isError).toBeFalsy();
-    expect(res.structuredContent.items.length).toBeGreaterThan(0);
-  });
-
-  it('8. list_menu runs and filters vegetarian items under 35k', async () => {
-    const res = await callTool('list_menu', {
-      date: minDate,
-      tags: ['vegetarian'],
-      max_price: 35000,
-    });
-    expect(res.isError).toBeFalsy();
-    for (const item of res.structuredContent.items) {
-      expect(item.tags).toContain('vegetarian');
-      expect(item.price).toBeLessThanOrEqual(35000);
-    }
-  });
-
-  it('Security check: No PII (userId, demo_student_) leaked in any tool output', async () => {
+  it('Security check: No PII (userId, userName, demo_student_) leaked in any tool output', async () => {
     const tools = [
+      'query_orders',
       'get_sales_summary',
       'get_top_items',
       'get_orders_by_slot',

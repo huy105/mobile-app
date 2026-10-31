@@ -228,7 +228,7 @@ Mục này chỉ ghi lại ý tưởng. Agent không được triển khai khi l
 - Một MCP server **chỉ đọc**, đọc Firestore bằng Firebase Admin SDK (service account key đặt ngoài repo, thêm vào `.gitignore`). Chạy local (stdio) trên máy chủ quán, dùng từ Claude Desktop hoặc Claude Code.
 - Chủ căng tin hỏi bằng tiếng Việt, ví dụ: doanh thu và số suất hôm nay; khung giờ đông nhất tuần này; món bán chạy và món ế; số đơn bị hủy; gợi ý số suất cần chuẩn bị cho ngày mai; tóm tắt tuần thành báo cáo.
 - Công cụ dự kiến: `get_sales_summary(date_range)`, `get_top_items(range)`, `get_orders_by_slot(date)`, `get_cancellations(range)`, `list_menu(date)`. Không có công cụ ghi hoặc xóa. Che bớt thông tin cá nhân của học sinh (tên, email) trong kết quả.
-- Đặt ở `tools/mcp-firestore/` (ngoài module `app`). Thiết kế chi tiết để code: **`docs/mcp-server-design.md`** (TypeScript, 8 công cụ, chạy local).
+- Đặt ở `tools/mcp-firestore/` (ngoài module `app`). Thiết kế chi tiết để code: **`docs/mcp-server-design.md`** (TypeScript, 1 công cụ tổng quát `query_orders` + 8 lối tắt, chạy local).
 
 ### 11.2 Hỏi đáp thực đơn cho khách (không dùng MCP)
 - MCP phục vụ AI client, không phải app Android. Học sinh hỏi món hôm nay thì làm **chatbot trong app**: ô chat gọi Claude API qua một Cloud Function (cần gói Blaze, giữ API key trên server), đưa thực đơn hôm nay (khoảng 10 món) vào prompt.

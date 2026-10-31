@@ -10,3 +10,4 @@ export function sanitizeText(text: string): string {
   // Loại bỏ các định danh nhạy cảm nếu có lọt vào chuỗi
   return text.replace(/demo_student_\w+/g, 'khach_***');
 }
+

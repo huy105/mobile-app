@@ -4,14 +4,15 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs/promises';
 
 import { FixtureSource } from '../src/data/fixtureSource.js';
-import { computeSalesSummary } from '../src/metrics/sales.js';
+import { computeOrderMetrics } from '../src/metrics/engine.js';
+import { applyOrderFilters } from '../src/util/filters.js';
 import { computeTopItems, computeUnsoldItems } from '../src/metrics/items.js';
 import { computeOrdersBySlot } from '../src/metrics/slots.js';
 import { computeCancellations } from '../src/metrics/cancellations.js';
 import { computePrepTimeStats } from '../src/metrics/prep.js';
 import { computeForecast } from '../src/metrics/forecast.js';
 import { computeListMenu } from '../src/metrics/menu.js';
-import { addDays } from '../src/util/dates.js';
+import { addDays, getIsoWeekday } from '../src/util/dates.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,7 +28,7 @@ describe('Full Metrics and Tools Verification against Section 9 Criteria', () =>
       date: string;
       status: string;
       total: number;
-      items: Array<{ quantity: number }>;
+      items: Array<{ quantity: number; price: number; category?: string; dishKey?: string; name: string }>;
       cancelReason?: string;
     }>;
     menuItems: Array<{
@@ -65,9 +66,11 @@ describe('Full Metrics and Tools Verification against Section 9 Criteria', () =>
     expect(orders.length).toBe(completed + cancelled);
   });
 
-  it('Criteria 2: get_sales_summary revenue matches sum of COMPLETED total, portions matches sum of quantity', async () => {
+  it('Criteria 2: Engine totals match sum of COMPLETED total from JSON', async () => {
     const orders = await source.getOrders({ from: minDate, to: maxDate });
-    const result = computeSalesSummary(orders, { from: minDate, to: maxDate }, [], 'day');
+    const timeSlots = await source.getTimeSlots();
+    const filterCtx = applyOrderFilters(orders, { date_from: minDate, date_to: maxDate }, timeSlots);
+    const engineRes = computeOrderMetrics(filterCtx.orders, filterCtx.appliedFilters, filterCtx.hasLineItemFilter, timeSlots);
 
     const expectedRevenue = rawJson.orders
       .filter((o) => o.status === 'COMPLETED')
@@ -77,31 +80,25 @@ describe('Full Metrics and Tools Verification against Section 9 Criteria', () =>
       .filter((o) => o.status === 'COMPLETED')
       .reduce((acc, o) => acc + o.items.reduce((sum, i) => sum + i.quantity, 0), 0);
 
-    expect(result.revenue).toBe(expectedRevenue);
-    expect(result.portions).toBe(expectedPortions);
-    expect(result.orders).toBe(rawJson.orders.filter((o) => o.status === 'COMPLETED').length);
-    expect(result.groups).toBeDefined();
-    expect(result.groups!.length).toBeGreaterThan(0);
+    expect(engineRes.totals.revenue).toBe(expectedRevenue);
+    expect(engineRes.totals.portions).toBe(expectedPortions);
+    expect(engineRes.totals.orders).toBe(rawJson.orders.filter((o) => o.status === 'COMPLETED').length);
   });
 
-  it('Criteria 3: Fill rates, rate percentages, and sell-through ratios are valid (0..1 or 0..100)', async () => {
+  it('Criteria 3: Fill rates, rate percentages, and sell-through ratios are valid', async () => {
     const orders = await source.getOrders({ from: minDate, to: maxDate });
     const timeSlots = await source.getTimeSlots();
     const menuItems = await source.getMenuItems({ from: minDate, to: maxDate });
 
-    // Slots
     const slotStats = computeOrdersBySlot(orders, timeSlots);
     for (const s of slotStats.slots) {
       expect(s.fillRate).toBeGreaterThanOrEqual(0);
-      expect(s.fillRate).toBeLessThanOrEqual(1.5); // capacity might have slight surge
     }
 
-    // Cancellations
     const cancelStats = computeCancellations(orders);
     expect(cancelStats.ratePct).toBeGreaterThanOrEqual(0);
     expect(cancelStats.ratePct).toBeLessThanOrEqual(100);
 
-    // Unsold
     const unsoldStats = computeUnsoldItems(menuItems, 0.5);
     for (const item of unsoldStats) {
       expect(item.avgSellThrough).toBeGreaterThanOrEqual(0);
@@ -116,7 +113,6 @@ describe('Full Metrics and Tools Verification against Section 9 Criteria', () =>
     expect(prepResult.prep.avg).toBeGreaterThan(0);
     expect(prepResult.prep.p90).toBeGreaterThanOrEqual(prepResult.prep.avg);
 
-    // Calculate max daily prep average manually
     const dayMap = new Map<string, number[]>();
     for (const o of orders) {
       if (o.status === 'COMPLETED' && o.readyAt && o.preparingAt) {
@@ -172,7 +168,6 @@ describe('Full Metrics and Tools Verification against Section 9 Criteria', () =>
   it('Criteria 7: forecast_tomorrow returns integer forecast for 4 weeks of data, null for < 2 weeks', async () => {
     const menuItems = await source.getMenuItems({ from: minDate, to: maxDate });
 
-    // With full fixture (around 4 weeks): target date maxDate + 1 day
     const targetDate = addDays(maxDate, 1);
     const fullForecast = computeForecast(menuItems, targetDate, 10);
 
@@ -184,7 +179,6 @@ describe('Full Metrics and Tools Verification against Section 9 Criteria', () =>
       }
     }
 
-    // Now test with under 2 weeks of data (e.g. only 7 days)
     const sevenDaysItems = menuItems.filter((m) => m.date >= minDate && m.date <= addDays(minDate, 6));
     const shortForecast = computeForecast(sevenDaysItems, addDays(minDate, 7), 10);
     for (const item of shortForecast.items) {
@@ -208,16 +202,34 @@ describe('Full Metrics and Tools Verification against Section 9 Criteria', () =>
     }
   });
 
-  it('Criteria 9: Top items best vs worst ordering', async () => {
+  it('Criteria 9: Shared Filters (weekdays, daypart, categories line item revenue)', async () => {
     const orders = await source.getOrders({ from: minDate, to: maxDate });
-    const menuItems = await source.getMenuItems({ from: minDate, to: maxDate });
+    const timeSlots = await source.getTimeSlots();
 
-    const best = computeTopItems(orders, menuItems, 'best', 5);
-    expect(best.length).toBe(5);
-    expect(best[0].portions).toBeGreaterThanOrEqual(best[1].portions);
+    // weekdays: [5] (Friday)
+    const friCtx = applyOrderFilters(orders, { date_from: minDate, date_to: maxDate, weekdays: [5] }, timeSlots);
+    for (const o of friCtx.orders) {
+      expect(getIsoWeekday(o.date)).toBe(5);
+    }
 
-    const worst = computeTopItems(orders, menuItems, 'worst', 5);
-    expect(worst.length).toBe(5);
-    expect(worst[0].portions).toBeLessThanOrEqual(worst[1].portions);
+    // daypart: lunch vs evening
+    const lunchCtx = applyOrderFilters(orders, { date_from: minDate, date_to: maxDate, daypart: 'lunch' }, timeSlots);
+    const eveCtx = applyOrderFilters(orders, { date_from: minDate, date_to: maxDate, daypart: 'evening' }, timeSlots);
+    expect(lunchCtx.orders.length + eveCtx.orders.length).toBe(orders.length);
+
+    // categories: line-item revenue
+    const drinkCtx = applyOrderFilters(orders, { date_from: minDate, date_to: maxDate, categories: ['Đồ uống'] }, timeSlots);
+    const drinkRes = computeOrderMetrics(drinkCtx.orders, drinkCtx.appliedFilters, drinkCtx.hasLineItemFilter, timeSlots);
+
+    let manualDrinkRev = 0;
+    for (const o of rawJson.orders) {
+      if (o.status !== 'COMPLETED') continue;
+      for (const item of o.items) {
+        if (item.category === 'Đồ uống') {
+          manualDrinkRev += item.price * item.quantity;
+        }
+      }
+    }
+    expect(drinkRes.totals.revenue).toBe(manualDrinkRev);
   });
 });

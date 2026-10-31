@@ -98,6 +98,16 @@ export function getPreviousPeriod(range: DateRange): DateRange {
 }
 
 /**
+ * Get ISO day of week: 1 = Monday, 2 = Tuesday, ..., 7 = Sunday
+ */
+export function getIsoWeekday(dateStr: string): number {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const utc = new Date(Date.UTC(y, m - 1, d));
+  const day = utc.getUTCDay();
+  return day === 0 ? 7 : day;
+}
+
+/**
  * Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday) for a yyyy-MM-dd date.
  */
 export function getWeekday(dateStr: string): number {

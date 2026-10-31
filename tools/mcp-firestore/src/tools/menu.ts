@@ -54,3 +54,4 @@ export function registerMenuTool(server: McpServer, dataSource: DataSource, conf
     }
   );
 }
+
