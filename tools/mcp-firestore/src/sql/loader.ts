@@ -71,20 +71,31 @@ export async function loadDatabase(
     }
     insertSlotStmt.free();
 
+    // Lập bản đồ tra cứu giá vốn của món theo ngày
+    const menuCostMap = new Map<string, number>();
+    for (const m of menuItems) {
+      const cost = m.costPrice || 0;
+      menuCostMap.set(`${m.date}|${m.id}`, cost);
+      const dishKey = m.dishKey || m.name;
+      menuCostMap.set(`${m.date}|${dishKey}`, cost);
+      menuCostMap.set(`${m.date}|${m.name}`, cost);
+    }
+
     // 4. Nạp orders và order_items
     const insertOrderStmt = db.prepare(`
       INSERT INTO orders (
         order_id, date, weekday, week_start, slot_id, slot_label, daypart, status, total,
+        subtotal, discount_amount, voucher_code, points_used,
         customer, created_at, preparing_at, ready_at, completed_at, cancelled_at,
         cancelled_by, cancel_reason, prep_minutes, wait_minutes, pickup_delay_minutes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `);
 
     const insertItemStmt = db.prepare(`
       INSERT INTO order_items (
         order_id, date, weekday, week_start, slot_label, daypart, status,
-        dish_key, name, category, price, quantity, line_revenue
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        dish_key, name, category, price, quantity, line_revenue, cost_price
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `);
 
     for (const o of orders) {
@@ -93,6 +104,11 @@ export async function loadDatabase(
       const startMin = parseStartMinute(o.slotId, o.slotLabel, timeSlots);
       const daypart = startMin < 840 ? 'lunch' : 'evening';
       const customer = maskUserId(o.userId);
+
+      const subtotal = o.subtotal !== undefined && o.subtotal > 0 ? o.subtotal : o.total;
+      const discountAmount = o.discountAmount ?? 0;
+      const voucherCode = o.voucherCode || null;
+      const pointsUsed = o.pointsUsed ?? 0;
 
       const createdAtStr = formatDateTimeInTz(o.createdAt, tz);
       const preparingAtStr = o.preparingAt ? formatDateTimeInTz(o.preparingAt, tz) : null;
@@ -128,6 +144,10 @@ export async function loadDatabase(
         daypart,
         o.status,
         o.total,
+        subtotal,
+        discountAmount,
+        voucherCode,
+        pointsUsed,
         customer,
         createdAtStr,
         preparingAtStr,
@@ -146,6 +166,12 @@ export async function loadDatabase(
         itemsCount++;
         const dishKey = item.dishKey || item.name;
         const lineRev = item.price * item.quantity;
+        const itemCost =
+          menuCostMap.get(`${o.date}|${item.menuItemId}`) ??
+          menuCostMap.get(`${o.date}|${dishKey}`) ??
+          menuCostMap.get(`${o.date}|${item.name}`) ??
+          0;
+
         insertItemStmt.run([
           o.id,
           o.date,
@@ -160,6 +186,7 @@ export async function loadDatabase(
           item.price,
           item.quantity,
           lineRev,
+          itemCost,
         ]);
       }
     }
@@ -171,8 +198,8 @@ export async function loadDatabase(
     const insertMenuStmt = db.prepare(`
       INSERT INTO menu_items (
         menu_item_id, date, weekday, dish_key, name, category,
-        price, tags, daily_quota, sold_qty, remaining_qty, in_stock, available
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        price, cost_price, tags, daily_quota, sold_qty, remaining_qty, in_stock, available
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `);
 
     for (const m of menuItems) {
@@ -193,6 +220,7 @@ export async function loadDatabase(
         m.name,
         m.category || 'Không rõ',
         m.price,
+        m.costPrice || 0,
         tagsStr,
         dailyQuota,
         soldQty,

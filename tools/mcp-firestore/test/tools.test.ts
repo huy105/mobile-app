@@ -69,6 +69,7 @@ describe('The 4 Core MCP Tools Integration Test', () => {
       expect(text).toContain('v_item_daily');
       expect(text).toContain('v_slot_daily');
       expect(text).toContain('v_item_sellthrough');
+      expect(text).toContain('v_pnl_daily');
 
       // Notes & sample queries
       expect(text).toContain('SELECT');

@@ -77,3 +77,4 @@ export function registerRunSqlTool(server: McpServer, dataSource: DataSource, co
     }
   );
 }
+

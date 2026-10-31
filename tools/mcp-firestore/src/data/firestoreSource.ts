@@ -67,6 +67,10 @@ export class FirestoreSource implements DataSource {
         pickupCode: d.pickupCode,
         status: d.status,
         total: d.total,
+        subtotal: d.subtotal !== undefined ? d.subtotal : d.total,
+        discountAmount: d.discountAmount ?? 0,
+        voucherCode: d.voucherCode || undefined,
+        pointsUsed: d.pointsUsed ?? 0,
         date: d.date,
         createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt),
         updatedAt: d.updatedAt?.toDate
@@ -122,6 +126,7 @@ export class FirestoreSource implements DataSource {
         tags: d.tags,
         dailyQuota: d.dailyQuota,
         soldQty: d.soldQty,
+        costPrice: d.costPrice ?? 0,
       };
     });
   }

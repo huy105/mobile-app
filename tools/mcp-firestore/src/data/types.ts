@@ -24,6 +24,10 @@ export interface Order {
   status: OrderStatus;
   total: number;
   date: string; // yyyy-MM-dd (giờ VN)
+  subtotal?: number;
+  discountAmount?: number;
+  voucherCode?: string;
+  pointsUsed?: number;
   createdAt: Date;
   updatedAt?: Date;
   preparingAt?: Date;
@@ -47,6 +51,7 @@ export interface MenuItem {
   tags?: string[];
   dailyQuota?: number; // 0 hoặc thiếu = không giới hạn
   soldQty?: number;
+  costPrice?: number;
 }
 
 export interface TimeSlot {

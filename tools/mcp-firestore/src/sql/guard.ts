@@ -178,3 +178,4 @@ export function validateSql(rawSql: string): GuardValidationResult {
     cleanSql: trimmed,
   };
 }
+

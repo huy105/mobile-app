@@ -139,7 +139,8 @@ interface OrderItem { menuItemId: string; name: string; price: number; quantity:
 interface Order {
   id: string; userId: string; userName: string;
   items: OrderItem[]; slotId: string; slotLabel: string; pickupCode: string;
-  status: OrderStatus; total: number; date: string;        // yyyy-MM-dd (giờ VN)
+  status: OrderStatus; total: number; date: string;        // total = số tiền khách trả (đã trừ giảm giá); date = yyyy-MM-dd (giờ VN)
+  subtotal?: number; discountAmount?: number; voucherCode?: string; pointsUsed?: number;  // v2; đơn cũ thiếu: subtotal = total, còn lại 0 hoặc rỗng
   createdAt: Date; updatedAt?: Date; preparingAt?: Date; readyAt?: Date;
   completedAt?: Date; cancelledAt?: Date;
   cancelledBy?: 'STUDENT' | 'CANTEEN'; cancelReason?: 'SOLD_OUT' | 'OVERLOAD' | 'NO_SHOW' | 'CHANGED_MIND' | 'OTHER';
@@ -149,6 +150,7 @@ interface MenuItem {
   id: string; name: string; description: string; price: number; imageUrl: string;
   category: string; inStock: boolean; date: string;
   dishKey?: string; tags?: string[]; dailyQuota?: number; soldQty?: number;  // dailyQuota 0 hoặc thiếu = không giới hạn
+  costPrice?: number;                       // giá vốn một suất (v2), 0 hoặc thiếu = chưa có
 }
 
 interface TimeSlot { id: string; label: string; startMinute: number; endMinute: number; maxOrders: number; }
@@ -237,7 +239,11 @@ Tất cả ngày dạng `yyyy-MM-dd`, mọi thời điểm dạng `yyyy-MM-dd HH
 | `slot_id`, `slot_label` | TEXT | khung giờ nhận, ví dụ `11:30 - 11:45` |
 | `daypart` | TEXT | `lunch` (khung bắt đầu trước 14:00) hoặc `evening` (từ 14:00) |
 | `status` | TEXT | RECEIVED, PREPARING, READY, COMPLETED, CANCELLED |
-| `total` | INTEGER | tổng tiền đơn (VND) |
+| `total` | INTEGER | số tiền khách trả (VND), **đã trừ giảm giá** |
+| `subtotal` | INTEGER | tạm tính trước giảm giá (đơn cũ thiếu thì bằng `total`) |
+| `discount_amount` | INTEGER | tổng giảm giá gồm voucher và điểm (thiếu thì 0) |
+| `voucher_code` | TEXT | mã voucher đã dùng, NULL nếu không dùng |
+| `points_used` | INTEGER | số điểm rèn luyện đã dùng (thiếu thì 0; 1 điểm = 500đ) |
 | `customer` | TEXT | mã băm ngắn của khách, không phải tên |
 | `created_at`, `preparing_at`, `ready_at`, `completed_at`, `cancelled_at` | TEXT | các mốc thời gian, NULL nếu chưa có |
 | `cancelled_by` | TEXT | STUDENT, CANTEEN hoặc NULL |
@@ -253,7 +259,8 @@ Tất cả ngày dạng `yyyy-MM-dd`, mọi thời điểm dạng `yyyy-MM-dd HH
 | `order_id`, `date`, `weekday`, `week_start`, `slot_label`, `daypart`, `status` | | sao từ `orders` |
 | `dish_key`, `name`, `category` | TEXT | món (`category` thiếu thì `'Không rõ'`) |
 | `price`, `quantity` | INTEGER | đơn giá, số suất |
-| `line_revenue` | INTEGER | `price × quantity` |
+| `line_revenue` | INTEGER | `price × quantity` (trước giảm giá) |
+| `cost_price` | INTEGER | giá vốn một suất, lấy từ `menu_items` cùng ngày (khớp `menuItemId`, không có thì khớp `dish_key`), không tìm thấy thì 0 |
 
 **Bảng `menu_items`** (menu từng ngày, một hàng một món một ngày)
 
@@ -262,6 +269,7 @@ Tất cả ngày dạng `yyyy-MM-dd`, mọi thời điểm dạng `yyyy-MM-dd HH
 | `menu_item_id`, `date`, `weekday` | | |
 | `dish_key`, `name`, `category` | TEXT | |
 | `price` | INTEGER | |
+| `cost_price` | INTEGER | giá vốn một suất, 0 = chưa có |
 | `tags` | TEXT | dạng `,vegetarian,filling,` (có dấu phẩy hai đầu; lọc bằng `tags LIKE '%,vegetarian,%'`) |
 | `daily_quota` | INTEGER | 0 = không giới hạn |
 | `sold_qty` | INTEGER | số suất đã bán trong ngày |
@@ -288,6 +296,7 @@ SELECT o.date, o.weekday, o.week_start,
   SUM(o.status IN ('RECEIVED','PREPARING','READY')) AS in_progress_orders,
   CASE WHEN SUM(o.status IN ('COMPLETED','CANCELLED')) = 0 THEN NULL
        ELSE 1.0 * SUM(o.status = 'CANCELLED') / SUM(o.status IN ('COMPLETED','CANCELLED')) END AS cancel_rate,
+  SUM(CASE WHEN o.status = 'COMPLETED' THEN o.discount_amount ELSE 0 END) AS discount_total,
   AVG(CASE WHEN o.status = 'COMPLETED' THEN o.prep_minutes END) AS avg_prep_minutes
 FROM orders o GROUP BY o.date, o.weekday, o.week_start;
 
@@ -314,13 +323,30 @@ SELECT date, weekday, dish_key, name, category, daily_quota, sold_qty,
        1.0 * sold_qty / daily_quota AS sell_through,
        CASE WHEN sold_qty >= daily_quota THEN 1 ELSE 0 END AS sold_out
 FROM menu_items WHERE daily_quota > 0;
+
+-- Mỗi ngày: doanh thu gộp, giảm giá, doanh thu thuần, chi phí (giá vốn) và lãi gộp. Tính trên đơn KHÔNG bị hủy
+-- (khớp tab Nhà bếp của app, vì bếp phải làm cả đơn chưa giao); khác `v_daily.revenue` (chỉ đơn COMPLETED).
+CREATE VIEW v_pnl_daily AS
+SELECT date, gross_revenue, discount_total,
+       gross_revenue - discount_total AS net_revenue,
+       cost,
+       gross_revenue - discount_total - cost AS gross_profit
+FROM (
+  SELECT i.date,
+         SUM(i.line_revenue) AS gross_revenue,
+         SUM(i.cost_price * i.quantity) AS cost,
+         (SELECT COALESCE(SUM(o.discount_amount), 0) FROM orders o
+            WHERE o.date = i.date AND o.status <> 'CANCELLED') AS discount_total
+  FROM order_items i WHERE i.status <> 'CANCELLED' GROUP BY i.date
+);
 ```
-Lưu ý khi viết SQL (đưa vào `get_schema`): doanh thu của **đơn** dùng `orders.total`; doanh thu của **món** dùng `order_items.line_revenue`; **không** JOIN `orders` với `order_items` rồi cộng `total` (sẽ cộng trùng). Mọi "doanh thu" và "số đơn bán" chỉ tính `status = 'COMPLETED'`. Tỷ lệ hủy = hủy / (hủy + hoàn thành). `time_slots.max_orders` cho biết sức chứa của khung.
+Lưu ý khi viết SQL (đưa vào `get_schema`): doanh thu của **đơn** dùng `orders.total`; doanh thu của **món** dùng `order_items.line_revenue`; **không** JOIN `orders` với `order_items` rồi cộng `total` (sẽ cộng trùng). Mọi "doanh thu" và "số đơn bán" chỉ tính `status = 'COMPLETED'`, và `orders.total` đã **trừ giảm giá** (voucher, điểm). Muốn xem doanh thu trước giảm giá, giảm giá và lãi gộp thì dùng `v_pnl_daily` (tính cả đơn chưa giao, khớp tab Nhà bếp). `cost_price = 0` nghĩa là món chưa có giá vốn, đừng coi là chi phí bằng 0 thật. Tỷ lệ hủy = hủy / (hủy + hoàn thành). `time_slots.max_orders` cho biết sức chứa của khung.
 
 ### 6.4 Loader (`sql/loader.ts`)
 - Nhận `DataSource`, `DateRange`, `TimeSlot[]`; tạo DB mới bằng `sql.js` (`new SQL.Database()`), chạy toàn bộ DDL bảng và view từ `schema.ts`.
 - Chuyển dữ liệu theo quy ước mục 5 và 6.3: tính `weekday`, `week_start`, `daypart` (tra `time_slots` theo `slotId`; không khớp thì đọc giờ bắt đầu từ `slotLabel` dạng `HH:mm - ...`), đổi `Date` sang chuỗi giờ VN, tính ba cột phút (NULL nếu thiếu mốc hoặc âm), tách `items[]` thành hàng `order_items`, đóng gói `tags` có dấu phẩy hai đầu, băm `customer`.
 - Chèn bằng câu lệnh tham số hóa (`INSERT ... VALUES (?, ?, ...)` trong một giao dịch) cho nhanh.
+- Trường v2: `subtotal` thiếu hoặc 0 thì lấy bằng `total`; `discount_amount`, `points_used` thiếu thì 0; `voucher_code` rỗng thì NULL. `cost_price` của dòng món tra trong `menu_items` đã nạp (cùng ngày, khớp `menuItemId`, không có thì khớp `dish_key`), không tìm thấy thì 0.
 - Không chèn `userId`, `userName`, `pickupCode` vào bất kỳ bảng nào.
 
 ### 6.5 Cache (`sql/cache.ts`)
@@ -382,6 +408,8 @@ Bảo mật: file key để **ngoài repo** (hoặc tên `serviceAccount.json`, 
 | Bếp chuẩn bị mất bao lâu theo khung giờ? | `SELECT slot_label, AVG(prep_minutes) AS avg_prep, COUNT(prep_minutes) AS orders FROM v_completed_orders GROUP BY slot_label ORDER BY slot_label` |
 | Món nào ế (tỷ lệ bán thấp)? | `SELECT name, AVG(sell_through) AS avg_sell_through, SUM(sold_out) AS sold_out_days, COUNT(*) AS days FROM v_item_sellthrough GROUP BY dish_key, name ORDER BY avg_sell_through ASC LIMIT 5` |
 | Đồ uống đóng góp bao nhiêu doanh thu mỗi khung? | `SELECT slot_label, SUM(line_revenue) AS revenue FROM v_completed_items WHERE category = 'Đồ uống' GROUP BY slot_label ORDER BY slot_label` |
+| Hôm qua doanh thu thuần, chi phí và lãi gộp bao nhiêu? | `SELECT gross_revenue, discount_total, net_revenue, cost, gross_profit FROM v_pnl_daily WHERE date = date('now','+7 hours','-1 day')` |
+| Voucher đã giảm tổng cộng bao nhiêu, mã nào được dùng nhiều nhất? | `SELECT voucher_code, COUNT(*) AS uses, SUM(discount_amount) AS discount FROM orders WHERE voucher_code IS NOT NULL AND status <> 'CANCELLED' GROUP BY voucher_code ORDER BY uses DESC` |
 | Hôm nay có món chay dưới 30k còn suất không? | `SELECT name, price, remaining_qty FROM menu_items WHERE date = date('now','+7 hours') AND tags LIKE '%,vegetarian,%' AND price < 30000 AND available = 1` |
 
 (SQLite không có múi giờ nên `date('now','+7 hours')` là ngày giờ VN; khi sinh `get_schema`, cũng thêm một ghi chú "ngày hôm nay là `<yyyy-MM-dd>`" do server điền sẵn, để AI không phải tự tính.)
@@ -407,6 +435,7 @@ Test bằng `vitest` trên `FixtureSource` (dữ liệu: `docs/data/seed-history
 **Nạp dữ liệu và công thức**
 - [ ] Số hàng `orders` bằng số đơn trong JSON trong khoảng ngày; số hàng `order_items` bằng tổng số dòng món; mỗi bảng không có cột tên hay `userId` (kiểm bằng `PRAGMA table_info` trong test, không phải qua `run_sql`).
 - [ ] `SELECT SUM(revenue) FROM v_daily` bằng tổng `total` của đơn `COMPLETED` tính tay từ JSON. `SELECT SUM(line_revenue) FROM v_completed_items` bằng tổng `price × quantity` của các dòng món đơn `COMPLETED` tính tay từ JSON.
+- [ ] v2: với mọi đơn `total = subtotal − discount_amount` và không âm; `SELECT SUM(net_revenue) FROM v_pnl_daily` bằng tổng `(Σ price × quantity) − Σ discountAmount` của các đơn không hủy tính tay từ JSON; `cost` bằng tổng `costPrice × quantity` (dữ liệu mẫu mọi món đều có giá vốn).
 - [ ] Số đơn: `COMPLETED + CANCELLED` bằng tổng đơn (dữ liệu mẫu không có đơn đang xử lý); `cancel_rate` nằm trong 0..1; mọi `*_minutes` ≥ 0 hoặc NULL.
 - [ ] Khung chiều tối: `daypart = 'evening'` chỉ có các khung từ 17:00; `lunch` cộng `evening` bằng tổng.
 - [ ] `v_slot_daily.orders` không bao giờ vượt `max_orders` (dữ liệu mẫu tuân thủ sức chứa).

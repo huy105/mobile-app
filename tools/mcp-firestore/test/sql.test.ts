@@ -190,6 +190,37 @@ describe('SQL Architecture & Safety Verification (Section 9)', () => {
       expect(names).toContain('Xôi thập cẩm');
       expect(names).toContain('Mì xào');
     });
+
+    it('v2 formulas: total = subtotal - discount_amount >= 0, v_pnl_daily net_revenue and cost', () => {
+      // 1. Kiểm tra mọi đơn: total = subtotal - discount_amount và không âm
+      const orderRes = executeQueryDirect(db, 'SELECT total, subtotal, discount_amount FROM orders;');
+      for (const [tot, sub, disc] of orderRes.rows) {
+        expect(tot).toBe(sub - disc);
+        expect(tot).toBeGreaterThanOrEqual(0);
+      }
+
+      // 2. v_pnl_daily: SUM(net_revenue) = total line_revenue - total discount_amount của đơn không hủy
+      const pnlRes = executeQueryDirect(
+        db,
+        'SELECT SUM(gross_revenue), SUM(discount_total), SUM(net_revenue), SUM(cost), SUM(gross_profit) FROM v_pnl_daily;'
+      );
+      const [grossRev, discTotal, netRev, costTotal, profitTotal] = pnlRes.rows[0];
+
+      const nonCancelled = rawJson.orders.filter(
+        (o) => o.date >= minDate && o.date <= maxDate && o.status !== 'CANCELLED'
+      );
+      const expectedGross = nonCancelled.reduce(
+        (acc, o) => acc + o.items.reduce((s, i) => s + i.price * i.quantity, 0),
+        0
+      );
+      const expectedDisc = nonCancelled.reduce((acc, o: any) => acc + (o.discountAmount || 0), 0);
+      const expectedNet = expectedGross - expectedDisc;
+
+      expect(grossRev).toBe(expectedGross);
+      expect(discTotal).toBe(expectedDisc);
+      expect(netRev).toBe(expectedNet);
+      expect(profitTotal).toBe(netRev - costTotal);
+    });
   });
 
   describe('3. Sample Queries from Section 8.1 Execute Cleanly', () => {
@@ -291,6 +322,26 @@ describe('SQL Architecture & Safety Verification (Section 9)', () => {
          WHERE tags LIKE '%,vegetarian,%' AND price < 30000 AND available = 1;`
       );
       expect(res.rows.length).toBeGreaterThan(0);
+    });
+
+    it('Query 12: Yesterday PnL gross_revenue, discount_total, net_revenue, cost, gross_profit', () => {
+      const res = executeQueryDirect(
+        db,
+        `SELECT gross_revenue, discount_total, net_revenue, cost, gross_profit
+         FROM v_pnl_daily WHERE date = (SELECT MAX(date) FROM v_pnl_daily);`
+      );
+      expect(res.rows.length).toBe(1);
+      expect(res.rows[0][0]).toBeGreaterThan(0);
+    });
+
+    it('Query 13: Voucher usage and discount amount', () => {
+      const res = executeQueryDirect(
+        db,
+        `SELECT voucher_code, COUNT(*) AS uses, SUM(discount_amount) AS discount
+         FROM orders WHERE voucher_code IS NOT NULL AND status <> 'CANCELLED'
+         GROUP BY voucher_code ORDER BY uses DESC;`
+      );
+      expect(res.rows.length).toBeGreaterThanOrEqual(0);
     });
   });
 

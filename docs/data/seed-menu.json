@@ -1,5 +1,5 @@
 {
-  "_note": "Dữ liệu mẫu cho SeedRepository. imageUrl lấy từ Wikimedia Commons (ảnh công khai, chỉ dùng cho demo). Field 'date' để trống: SeedRepository gán bằng ngày hiện tại (yyyy-MM-dd) khi seed. Trường mới: dishKey (mã món ổn định), tags (vegetarian, filling, quick, healthy, drink), dailyQuota (0 = không giới hạn; 14 suất món ăn, 25 suất đồ uống, khớp ~50-70 đơn/ngày của 8 khung giờ trưa và chiều tối).",
+  "_note": "Dữ liệu mẫu cho SeedRepository. imageUrl lấy từ Wikimedia Commons (ảnh công khai, chỉ dùng cho demo học tập). Field 'date' để trống: SeedRepository gán bằng ngày hiện tại (yyyy-MM-dd) khi seed. dishKey (mã món ổn định), tags (vegetarian, filling, quick, healthy, drink), dailyQuota (0 = không giới hạn; 14 suất món ăn, 25 suất đồ uống, khớp ~50-70 đơn/ngày của 8 khung giờ trưa và chiều tối). costPrice = giá vốn (VND); giá bán xấp xỉ costPrice x 1,5 (cộng 50% công chế biến) làm tròn nghìn đồng. vouchers: 'validDays' là số ngày hiệu lực tính từ lúc seed (âm = đã hết hạn); SeedRepository đổi thành 'validUntil' (yyyy-MM-dd).",
   "menuItems": [
     {
       "name": "Cơm sườn nướng",
@@ -12,7 +12,8 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 23500
     },
     {
       "name": "Cơm thịt kho trứng",
@@ -25,7 +26,8 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 20000
     },
     {
       "name": "Gà rán giòn",
@@ -38,7 +40,8 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 21500
     },
     {
       "name": "Bún bò Huế",
@@ -51,7 +54,8 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 23500
     },
     {
       "name": "Phở bò",
@@ -64,7 +68,8 @@
       "tags": [
         "filling"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 26500
     },
     {
       "name": "Mì xào",
@@ -78,7 +83,8 @@
         "quick",
         "vegetarian"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 18500
     },
     {
       "name": "Bánh mì thập cẩm",
@@ -91,7 +97,8 @@
       "tags": [
         "quick"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 13500
     },
     {
       "name": "Xôi thập cẩm",
@@ -105,7 +112,8 @@
         "quick",
         "filling"
       ],
-      "dailyQuota": 14
+      "dailyQuota": 14,
+      "costPrice": 12000
     },
     {
       "name": "Cà phê sữa đá",
@@ -118,7 +126,8 @@
       "tags": [
         "drink"
       ],
-      "dailyQuota": 25
+      "dailyQuota": 25,
+      "costPrice": 12000
     },
     {
       "name": "Trà chanh",
@@ -132,7 +141,200 @@
         "drink",
         "healthy"
       ],
-      "dailyQuota": 25
+      "dailyQuota": 25,
+      "costPrice": 10000
+    },
+    {
+      "name": "Cơm gà Tam Kỳ",
+      "description": "Cơm vàng, gà xé, hành phi, rau răm",
+      "price": 35000,
+      "category": "Cơm",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/89/C%C6%A1m_g%C3%A0_Tam_K%E1%BB%B3%2C_Qu%E1%BA%A3ng_Nam.JPG/960px-C%C6%A1m_g%C3%A0_Tam_K%E1%BB%B3%2C_Qu%E1%BA%A3ng_Nam.JPG",
+      "dishKey": "com-ga-tam-ky",
+      "tags": [
+        "filling"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 23500
+    },
+    {
+      "name": "Cơm chiên dương châu",
+      "description": "Cơm chiên trứng, lạp xưởng, đậu Hà Lan",
+      "price": 30000,
+      "category": "Cơm",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Chinese_fried_rice_by_stu_spivack_in_Cleveland%2C_OH.jpg/960px-Chinese_fried_rice_by_stu_spivack_in_Cleveland%2C_OH.jpg",
+      "dishKey": "com-chien-duong-chau",
+      "tags": [
+        "filling",
+        "quick"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 20000
+    },
+    {
+      "name": "Hủ tiếu Nam Vang",
+      "description": "Nước dùng ngọt xương, tôm, thịt bằm, giá",
+      "price": 32000,
+      "category": "Bún/Mì",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/H%E1%BB%A7_ti%E1%BA%BFu_Nam_Vang.jpg/960px-H%E1%BB%A7_ti%E1%BA%BFu_Nam_Vang.jpg",
+      "dishKey": "hu-tieu-nam-vang",
+      "tags": [
+        "filling"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 21500
+    },
+    {
+      "name": "Bún riêu cua",
+      "description": "Riêu cua, cà chua, đậu hũ, huyết",
+      "price": 32000,
+      "category": "Bún/Mì",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f0/Bun_rieu.jpg/960px-Bun_rieu.jpg",
+      "dishKey": "bun-rieu-cua",
+      "tags": [
+        "filling"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 21500
+    },
+    {
+      "name": "Bún chả Hà Nội",
+      "description": "Chả nướng, nước mắm chua ngọt, bún, rau sống",
+      "price": 38000,
+      "category": "Bún/Mì",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7f/Bun-cha-hanoi.jpg/960px-Bun-cha-hanoi.jpg",
+      "dishKey": "bun-cha",
+      "tags": [
+        "filling"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 25500
+    },
+    {
+      "name": "Bánh cuốn",
+      "description": "Bánh cuốn nhân thịt, chả lụa, hành phi",
+      "price": 25000,
+      "category": "Ăn nhanh",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/79/B%C3%A1nh_cu%E1%BB%91n_Saigon.jpg/960px-B%C3%A1nh_cu%E1%BB%91n_Saigon.jpg",
+      "dishKey": "banh-cuon",
+      "tags": [
+        "quick"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 16500
+    },
+    {
+      "name": "Gỏi cuốn chay",
+      "description": "Đậu hũ chiên, rau sống, bún, nước chấm đậu phộng",
+      "price": 22000,
+      "category": "Ăn nhanh",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/G%E1%BB%8Fi_Cu%E1%BB%91n_Chay_Vietnamese_Fresh_Vegetarian_Spring_Roll_2019-1599.jpg/960px-G%E1%BB%8Fi_Cu%E1%BB%91n_Chay_Vietnamese_Fresh_Vegetarian_Spring_Roll_2019-1599.jpg",
+      "dishKey": "goi-cuon-chay",
+      "tags": [
+        "quick",
+        "vegetarian",
+        "healthy"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 14500
+    },
+    {
+      "name": "Chả giò",
+      "description": "Chả giò chiên giòn, nước mắm pha",
+      "price": 20000,
+      "category": "Ăn nhanh",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Ch%E1%BA%A3_gi%C3%B2_%28Vietnamese_Spring_Rolls%29_-_12.jpg/960px-Ch%E1%BA%A3_gi%C3%B2_%28Vietnamese_Spring_Rolls%29_-_12.jpg",
+      "dishKey": "cha-gio",
+      "tags": [
+        "quick"
+      ],
+      "dailyQuota": 14,
+      "costPrice": 13500
+    },
+    {
+      "name": "Nước cam ép",
+      "description": "Cam vắt tươi, ít đường",
+      "price": 22000,
+      "category": "Đồ uống",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/da/Orange_juice_without_any_fruits.jpg/960px-Orange_juice_without_any_fruits.jpg",
+      "dishKey": "nuoc-cam-ep",
+      "tags": [
+        "drink",
+        "healthy",
+        "vegetarian"
+      ],
+      "dailyQuota": 25,
+      "costPrice": 14500
+    },
+    {
+      "name": "Sinh tố bơ",
+      "description": "Bơ sáp xay với sữa đặc",
+      "price": 28000,
+      "category": "Đồ uống",
+      "inStock": true,
+      "imageUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Sinh_t%E1%BB%91_b%C6%A1.jpg/960px-Sinh_t%E1%BB%91_b%C6%A1.jpg",
+      "dishKey": "sinh-to-bo",
+      "tags": [
+        "drink",
+        "vegetarian"
+      ],
+      "dailyQuota": 25,
+      "costPrice": 18500
+    }
+  ],
+  "vouchers": [
+    {
+      "code": "WELCOME10",
+      "title": "Giảm 10% (tối đa 15.000đ)",
+      "type": "PERCENT",
+      "value": 10,
+      "minOrder": 30000,
+      "maxDiscount": 15000,
+      "validDays": 365,
+      "maxUses": 0,
+      "active": true
+    },
+    {
+      "code": "GIAM5K",
+      "title": "Giảm 5.000đ cho đơn từ 20.000đ",
+      "type": "AMOUNT",
+      "value": 5000,
+      "minOrder": 20000,
+      "maxDiscount": 0,
+      "validDays": 365,
+      "maxUses": 0,
+      "active": true
+    },
+    {
+      "code": "SINHVIEN",
+      "title": "Giảm 3.000đ, không điều kiện",
+      "type": "AMOUNT",
+      "value": 3000,
+      "minOrder": 0,
+      "maxDiscount": 0,
+      "validDays": 365,
+      "maxUses": 0,
+      "active": true
+    },
+    {
+      "code": "HETHAN",
+      "title": "Mã đã hết hạn (dùng để thử lỗi)",
+      "type": "AMOUNT",
+      "value": 10000,
+      "minOrder": 0,
+      "maxDiscount": 0,
+      "validDays": -30,
+      "maxUses": 0,
+      "active": true
     }
   ],
   "timeSlots": [

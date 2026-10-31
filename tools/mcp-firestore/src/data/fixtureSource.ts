@@ -17,6 +17,7 @@ interface RawHistoryFile {
     tags?: string[];
     dailyQuota?: number;
     soldQty?: number;
+    costPrice?: number;
   }>;
   orders: Array<{
     id: string;
@@ -35,6 +36,10 @@ interface RawHistoryFile {
     pickupCode: string;
     status: Order['status'];
     total: number;
+    subtotal?: number;
+    discountAmount?: number;
+    voucherCode?: string;
+    pointsUsed?: number;
     date: string;
     createdAt: string;
     updatedAt?: string;
@@ -94,6 +99,7 @@ export class FixtureSource implements DataSource {
       tags: m.tags,
       dailyQuota: m.dailyQuota,
       soldQty: m.soldQty,
+      costPrice: m.costPrice ?? 0,
     }));
 
     const orders: Order[] = (raw.orders || []).map((o) => ({
@@ -113,6 +119,10 @@ export class FixtureSource implements DataSource {
       pickupCode: o.pickupCode,
       status: o.status,
       total: o.total,
+      subtotal: o.subtotal !== undefined ? o.subtotal : o.total,
+      discountAmount: o.discountAmount ?? 0,
+      voucherCode: o.voucherCode || undefined,
+      pointsUsed: o.pointsUsed ?? 0,
       date: o.date,
       createdAt: new Date(o.createdAt),
       updatedAt: o.updatedAt ? new Date(o.updatedAt) : undefined,
