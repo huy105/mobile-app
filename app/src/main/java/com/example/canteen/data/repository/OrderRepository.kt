@@ -14,7 +14,9 @@ interface OrderRepository {
         slotId: String,
         slotLabel: String,
         total: Long,
-        date: String
+        date: String,
+        voucherCode: String? = null,
+        usePoints: Boolean = false
     ): Result<Order>
 
     fun getTodayOrders(date: String): Flow<List<Order>>

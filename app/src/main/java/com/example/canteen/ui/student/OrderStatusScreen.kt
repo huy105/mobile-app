@@ -1,6 +1,11 @@
 package com.example.canteen.ui.student
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,7 +40,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -138,6 +145,19 @@ fun OrderStatusScreen(
                     label = "codeBannerBg"
                 )
 
+                var bannerAppeared by remember { mutableStateOf(false) }
+                LaunchedEffect(order.id) { bannerAppeared = true }
+                val bannerScale by animateFloatAsState(
+                    targetValue = if (bannerAppeared) 1f else 0.9f,
+                    animationSpec = tween(350),
+                    label = "bannerScale"
+                )
+                val bannerAlpha by animateFloatAsState(
+                    targetValue = if (bannerAppeared) 1f else 0f,
+                    animationSpec = tween(350),
+                    label = "bannerAlpha"
+                )
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -145,10 +165,12 @@ fun OrderStatusScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    // Big Pickup Code Card
+                    // Big Pickup Code Card (entry scale 0.9 -> 1 + fade)
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .scale(bannerScale)
+                            .alpha(bannerAlpha)
                             .clip(ShapeCodeBanner)
                             .background(bannerBg)
                             .padding(vertical = 20.dp, horizontal = 16.dp),
@@ -245,6 +267,71 @@ fun OrderStatusScreen(
                         HorizontalDivider(color = Outline, thickness = 1.dp)
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        if (order.discountAmount > 0L) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Tạm tính",
+                                    fontSize = 14.sp,
+                                    color = OnSurfaceVariant
+                                )
+                                Text(
+                                    text = order.displaySubtotal.formatVnd(),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OnSurface
+                                )
+                            }
+
+                            if (order.voucherDiscount > 0L) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Voucher ${order.voucherCode}",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Success
+                                    )
+                                    Text(
+                                        text = "-${order.voucherDiscount.formatVnd()}",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Success
+                                    )
+                                }
+                            }
+
+                            if (order.pointsDiscount > 0L) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Điểm rèn luyện (${order.pointsUsed} điểm)",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Success
+                                    )
+                                    Text(
+                                        text = "-${order.pointsDiscount.formatVnd()}",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Success
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+                            HorizontalDivider(color = Outline, thickness = 1.dp)
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -327,59 +414,125 @@ fun OrderStepper(
         OrderStatus.CANCELLED -> -1
     }
 
-    Row(
+    // Step current glowing (alpha 0.3 ↔ 0.9)
+    val infiniteTransition = rememberInfiniteTransition(label = "stepGlow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
+    // Connecting line progress
+    val targetProgress = (currentIndex.coerceIn(0, 3) / 3f)
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = tween(400),
+        label = "stepperProgress"
+    )
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 12.dp)
     ) {
-        steps.forEachIndexed { index, (_, label) ->
-            val isDone = index < currentIndex
-            val isCurrent = index == currentIndex
+        // Background track connecting line
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 36.dp)
+                .padding(top = 15.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(CircleShape)
+                    .background(Outline)
+            )
+        }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
+        // Animated progress connecting line
+        if (animatedProgress > 0f) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 36.dp)
+                    .padding(top = 15.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Circle Indicator
-                val circleBg = when {
-                    isDone -> Success
-                    isCurrent -> Primary
-                    else -> Outline
-                }
-
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .fillMaxWidth(animatedProgress)
+                        .height(3.dp)
                         .clip(CircleShape)
-                        .background(circleBg)
-                        .then(
-                            if (isCurrent) Modifier.border(4.dp, PrimaryContainer, CircleShape) else Modifier
-                        ),
-                    contentAlignment = Alignment.Center
+                        .background(Success)
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            steps.forEachIndexed { index, (_, label) ->
+                val isDone = index < currentIndex
+                val isCurrent = index == currentIndex
+
+                val checkScale by animateFloatAsState(
+                    targetValue = if (isDone || (isCurrent && currentStatus == OrderStatus.COMPLETED)) 1f else 0.8f,
+                    animationSpec = tween(300),
+                    label = "checkScale"
+                )
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val iconText = when {
-                        isDone -> "✓"
-                        isCurrent -> "●"
-                        else -> (index + 1).toString()
+                    val circleBg = when {
+                        isDone || (isCurrent && currentStatus == OrderStatus.COMPLETED) -> Success
+                        isCurrent -> Primary
+                        else -> Outline
                     }
+
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(circleBg)
+                            .then(
+                                if (isCurrent) Modifier.border(4.dp, PrimaryContainer.copy(alpha = glowAlpha), CircleShape) else Modifier
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val iconText = when {
+                            isDone || (isCurrent && currentStatus == OrderStatus.COMPLETED) -> "✓"
+                            isCurrent -> "●"
+                            else -> (index + 1).toString()
+                        }
+                        Text(
+                            text = iconText,
+                            color = if (isDone || isCurrent) OnPrimary else OnSurfaceVariant,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = if (isDone || (isCurrent && currentStatus == OrderStatus.COMPLETED)) Modifier.scale(checkScale) else Modifier
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
                     Text(
-                        text = iconText,
-                        color = if (isDone || isCurrent) OnPrimary else OnSurfaceVariant,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
+                        text = label,
+                        fontSize = 11.sp,
+                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.SemiBold,
+                        color = if (isCurrent) Primary else if (isDone) OnSurface else OnSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
                 }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (isCurrent) Primary else if (isDone) OnSurface else OnSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
             }
         }
     }

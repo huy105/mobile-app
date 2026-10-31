@@ -1,5 +1,8 @@
 package com.example.canteen.ui.student
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +44,7 @@ import com.example.canteen.ui.common.components.RawTag
 import com.example.canteen.ui.common.theme.Background
 import com.example.canteen.ui.common.theme.Error
 import com.example.canteen.ui.common.theme.ErrorContainer
+import com.example.canteen.ui.common.theme.OnPrimary
 import com.example.canteen.ui.common.theme.OnSurface
 import com.example.canteen.ui.common.theme.OnSurfaceVariant
 import com.example.canteen.ui.common.theme.Outline
@@ -249,20 +254,28 @@ fun SlotItemCard(
     val isDisabled = isPast || isFull
     val alpha = if (isDisabled) 0.5f else 1f
 
-    val bg = when {
+    val targetBg = when {
         isSelected -> PrimaryContainer
         isDisabled -> SurfaceVariant
         else -> Surface
     }
+    val animatedBg by animateColorAsState(targetValue = targetBg, animationSpec = tween(200), label = "slotBg")
 
-    val borderColor = if (isSelected) Primary else Outline
+    val targetBorder = if (isSelected) Primary else Outline
+    val animatedBorder by animateColorAsState(targetValue = targetBorder, animationSpec = tween(200), label = "slotBorder")
+
+    val radioScale by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0.85f,
+        animationSpec = tween(200),
+        label = "radioScale"
+    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(ShapeCard)
-            .background(bg)
-            .border(if (isSelected) 1.5.dp else 1.dp, borderColor, ShapeCard)
+            .background(animatedBg)
+            .border(if (isSelected) 1.5.dp else 1.dp, animatedBorder, ShapeCard)
             .clickable(enabled = !isDisabled) { onClick() }
             .padding(14.dp)
             .alpha(alpha),
@@ -309,11 +322,12 @@ fun SlotItemCard(
                 Box(
                     modifier = Modifier
                         .size(22.dp)
+                        .scale(radioScale)
                         .clip(CircleShape)
                         .background(Surface)
                         .border(
                             width = if (isSelected) 7.dp else 2.dp,
-                            color = if (isSelected) Primary else Outline,
+                            color = animatedBorder,
                             shape = CircleShape
                         )
                 )

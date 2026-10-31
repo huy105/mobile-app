@@ -1,5 +1,12 @@
 package com.example.canteen.ui.student
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -222,12 +229,26 @@ fun StudentBottomBar(
                                 .background(Primary),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = if (cartItemCount > 99) "99+" else cartItemCount.toString(),
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = OnPrimary
-                            )
+                            AnimatedContent(
+                                targetState = cartItemCount,
+                                transitionSpec = {
+                                    if (targetState > initialState) {
+                                        slideInVertically { height -> height } + fadeIn() togetherWith
+                                            slideOutVertically { height -> -height } + fadeOut()
+                                    } else {
+                                        slideInVertically { height -> -height } + fadeIn() togetherWith
+                                            slideOutVertically { height -> height } + fadeOut()
+                                    }.using(SizeTransform(clip = false))
+                                },
+                                label = "cartBadgeCount"
+                            ) { count ->
+                                Text(
+                                    text = if (count > 99) "99+" else count.toString(),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnPrimary
+                                )
+                            }
                         }
                     }
                 }

@@ -105,7 +105,9 @@ class SlotPickerViewModel @Inject constructor(
                 slotId = selectedSlot.id,
                 slotLabel = selectedSlot.label,
                 total = cart.totalPrice,
-                date = today
+                date = today,
+                voucherCode = cart.voucherCode,
+                usePoints = cart.usePoints
             )
 
             result.onSuccess { order ->

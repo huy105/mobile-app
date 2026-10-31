@@ -100,6 +100,7 @@ fun CanteenRootScreen(
                         1 -> CanteenOrdersScreen()
                         2 -> CanteenMenuScreen()
                         3 -> CanteenVerifyScreen()
+                        4 -> KitchenScreen()
                     }
                 }
             }
@@ -168,7 +169,8 @@ fun CanteenNavigationRail(
         Triple(0, "📊", "Tổng quan"),
         Triple(1, "📋", "Đơn hàng"),
         Triple(2, "🍽", "Thực đơn"),
-        Triple(3, "✅", "Trả đồ")
+        Triple(3, "✅", "Trả đồ"),
+        Triple(4, "🧑‍🍳", "Nhà bếp")
     )
 
     Column(
@@ -226,7 +228,8 @@ fun CanteenBottomBar(
             Triple(0, "📊", "Tổng quan"),
             Triple(1, "📋", "Đơn hàng"),
             Triple(2, "🍽", "Thực đơn"),
-            Triple(3, "✅", "Trả đồ")
+            Triple(3, "✅", "Trả đồ"),
+            Triple(4, "🧑‍🍳", "Nhà bếp")
         )
 
         for ((index, icon, label) in items) {

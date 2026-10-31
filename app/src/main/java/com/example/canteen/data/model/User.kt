@@ -7,7 +7,8 @@ data class User(
     val uid: String = "",
     val name: String = "",
     val email: String = "",
-    val role: String = UserRole.STUDENT.name
+    val role: String = UserRole.STUDENT.name,
+    val points: Int = 0
 ) {
     val userRole: UserRole
         get() = UserRole.fromString(role)

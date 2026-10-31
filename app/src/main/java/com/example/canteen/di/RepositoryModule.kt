@@ -43,5 +43,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCartRepository(impl: com.example.canteen.data.repository.CartRepositoryImpl): com.example.canteen.data.repository.CartRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindVoucherRepository(impl: com.example.canteen.data.repository.VoucherRepositoryImpl): com.example.canteen.data.repository.VoucherRepository
 }
 

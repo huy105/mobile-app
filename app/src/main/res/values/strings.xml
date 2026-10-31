@@ -21,6 +21,7 @@
     <string name="nav_canteen_orders">Đơn hàng</string>
     <string name="nav_canteen_menu">Thực đơn</string>
     <string name="nav_canteen_verify">Trả đồ</string>
+    <string name="nav_canteen_kitchen">Nhà bếp</string>
 
     <!-- Canteen Dashboard -->
     <string name="dashboard_realtime_subtitle">Cập nhật theo thời gian thực</string>

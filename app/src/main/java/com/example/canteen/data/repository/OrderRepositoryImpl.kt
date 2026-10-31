@@ -5,7 +5,10 @@ import com.example.canteen.data.model.Order
 import com.example.canteen.data.model.OrderItem
 import com.example.canteen.data.model.OrderStatus
 import com.example.canteen.data.model.TimeSlot
+import com.example.canteen.data.model.Voucher
+import com.example.canteen.data.model.VoucherRedemption
 import com.example.canteen.data.model.slotCounterId
+import com.example.canteen.ui.common.util.PricingCalculator
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
@@ -30,7 +33,9 @@ class OrderRepositoryImpl @Inject constructor(
         slotId: String,
         slotLabel: String,
         total: Long,
-        date: String
+        date: String,
+        voucherCode: String?,
+        usePoints: Boolean
     ): Result<Order> {
         return try {
             // 1. Generate unique 4-digit code for today
@@ -45,10 +50,17 @@ class OrderRepositoryImpl @Inject constructor(
                 pickupCode = String.format(Locale.getDefault(), "%04d", Random.nextInt(10000))
             } while (pickupCode in existingCodes)
 
-            // 2. Execute Firestore transaction for stock, quota and slot capacity validation
+            // 2. Execute Firestore transaction for stock, quota, slot capacity, voucher, points validation
             val slotRef = firestore.collection("timeSlots").document(slotId)
             val counterRef = firestore.collection("timeSlotCounters").document(slotCounterId(slotId, date))
             val newOrderRef = firestore.collection("orders").document()
+
+            val normalizedVoucherCode = voucherCode?.trim()?.uppercase()?.takeIf { it.isNotBlank() }
+            val voucherRef = normalizedVoucherCode?.let { firestore.collection("vouchers").document(it) }
+            val redemptionRef = normalizedVoucherCode?.let {
+                firestore.collection("voucherRedemptions").document("${it}_$userId")
+            }
+            val userRef = firestore.collection("users").document(userId)
 
             val createdOrder = firestore.runTransaction { transaction ->
                 // Check TimeSlot
@@ -75,6 +87,14 @@ class OrderRepositoryImpl @Inject constructor(
                     } else null
                 }
 
+                // Read voucher and redemption docs before any writes
+                val voucherDoc = voucherRef?.let { transaction.get(it) }
+                val redemptionDoc = redemptionRef?.let { transaction.get(it) }
+
+                // Read user doc before any writes
+                val userDoc = transaction.get(userRef)
+                val currentUserPoints = if (userDoc.exists()) (userDoc.getLong("points") ?: 0L).toInt() else 0
+
                 // Check menu items in stock and quota
                 for ((item, _, itemDoc) in itemDocPairs) {
                     if (itemDoc.exists()) {
@@ -91,14 +111,57 @@ class OrderRepositoryImpl @Inject constructor(
                     }
                 }
 
+                // Recalculate subtotal using verified server menu item prices
+                val verifiedItems = items.map { item ->
+                    val foundDoc = itemDocPairs.find { it.first.menuItemId == item.menuItemId }?.third
+                    val serverPrice = if (foundDoc != null && foundDoc.exists()) {
+                        foundDoc.getLong("price") ?: item.price
+                    } else {
+                        item.price
+                    }
+                    item.copy(price = serverPrice)
+                }
+                val serverSubtotal = verifiedItems.sumOf { it.price * it.quantity }
+
+                // Validate voucher if provided
+                val verifiedVoucher: Voucher? = if (normalizedVoucherCode != null) {
+                    if (voucherDoc == null || !voucherDoc.exists()) {
+                        throw FirebaseFirestoreException("Mã không tồn tại", FirebaseFirestoreException.Code.NOT_FOUND)
+                    }
+                    val v = voucherDoc.toObject(Voucher::class.java)?.copy(code = voucherDoc.id)
+                        ?: throw FirebaseFirestoreException("Mã không tồn tại", FirebaseFirestoreException.Code.NOT_FOUND)
+                    val isAlreadyRedeemed = redemptionDoc?.exists() == true
+                    val validationError = PricingCalculator.validateVoucher(
+                        voucher = v,
+                        subtotal = serverSubtotal,
+                        today = date,
+                        isAlreadyRedeemed = isAlreadyRedeemed
+                    )
+                    if (validationError != null) {
+                        throw FirebaseFirestoreException(validationError, FirebaseFirestoreException.Code.INVALID_ARGUMENT)
+                    }
+                    v
+                } else null
+
+                // Compute final pricing with verified server values
+                val pricing = PricingCalculator.calculate(
+                    subtotal = serverSubtotal,
+                    voucher = verifiedVoucher,
+                    userPoints = currentUserPoints,
+                    usePoints = usePoints
+                )
+                if (usePoints && pricing.pointsUsed > currentUserPoints) {
+                    throw FirebaseFirestoreException("Không đủ điểm rèn luyện", FirebaseFirestoreException.Code.INVALID_ARGUMENT)
+                }
+
                 // Writes start here:
-                // Increment today's counter for this slot
+                // 1. Increment today's counter for this slot
                 transaction.set(
                     counterRef,
                     mapOf("slotId" to slotId, "date" to date, "count" to ordersToday + 1)
                 )
 
-                // Update soldQty and inStock for items
+                // 2. Update soldQty and inStock for items
                 for ((item, itemRef, itemDoc) in itemDocPairs) {
                     if (itemDoc.exists()) {
                         val dailyQuota = (itemDoc.getLong("dailyQuota") ?: 0L).toInt()
@@ -112,18 +175,41 @@ class OrderRepositoryImpl @Inject constructor(
                     }
                 }
 
-                // Create Order
+                // 3. Voucher redemption write
+                if (verifiedVoucher != null && voucherRef != null && redemptionRef != null) {
+                    transaction.update(voucherRef, "usedCount", verifiedVoucher.usedCount + 1)
+                    val redemption = VoucherRedemption(
+                        id = "${verifiedVoucher.code}_$userId",
+                        code = verifiedVoucher.code,
+                        userId = userId,
+                        orderId = newOrderRef.id,
+                        date = date
+                    )
+                    transaction.set(redemptionRef, redemption)
+                }
+
+                // 4. Points deduction write
+                if (pricing.pointsUsed > 0 && userDoc.exists()) {
+                    val remainingPoints = (currentUserPoints - pricing.pointsUsed).coerceAtLeast(0)
+                    transaction.update(userRef, "points", remainingPoints)
+                }
+
+                // 5. Create Order
                 val now = Timestamp.now()
                 val order = Order(
                     id = newOrderRef.id,
                     userId = userId,
                     userName = userName,
-                    items = items,
+                    items = verifiedItems,
                     slotId = slotId,
                     slotLabel = slotLabel,
                     pickupCode = pickupCode,
                     status = OrderStatus.RECEIVED.name,
-                    total = total,
+                    subtotal = pricing.subtotal,
+                    discountAmount = pricing.discountAmount,
+                    voucherCode = if (pricing.voucherDiscount > 0 && verifiedVoucher != null) verifiedVoucher.code else "",
+                    pointsUsed = pricing.pointsUsed,
+                    total = pricing.total,
                     date = date,
                     createdAt = now,
                     updatedAt = now
@@ -252,6 +338,23 @@ class OrderRepositoryImpl @Inject constructor(
                 } else null
                 val counterDoc = counterRef?.let { transaction.get(it) }
 
+                // 3. Read voucher and redemption docs if order had a voucher
+                val voucherRef = if (order.voucherCode.isNotBlank()) {
+                    firestore.collection("vouchers").document(order.voucherCode)
+                } else null
+                val voucherDoc = voucherRef?.let { transaction.get(it) }
+
+                val redemptionRef = if (order.voucherCode.isNotBlank()) {
+                    firestore.collection("voucherRedemptions").document("${order.voucherCode}_${order.userId}")
+                } else null
+                val redemptionDoc = redemptionRef?.let { transaction.get(it) }
+
+                // 4. Read user doc if points need to be refunded
+                val userRef = if (order.pointsUsed > 0) {
+                    firestore.collection("users").document(order.userId)
+                } else null
+                val userDoc = userRef?.let { transaction.get(it) }
+
                 // Writes start here:
                 // Give the seat back to the order's own day
                 if (counterRef != null && counterDoc != null && counterDoc.exists()) {
@@ -273,6 +376,21 @@ class OrderRepositoryImpl @Inject constructor(
                             }
                         }
                     }
+                }
+
+                // Restore voucher: delete redemption doc and decrement usedCount
+                if (redemptionRef != null && redemptionDoc != null && redemptionDoc.exists()) {
+                    transaction.delete(redemptionRef)
+                }
+                if (voucherRef != null && voucherDoc != null && voucherDoc.exists()) {
+                    val usedCount = voucherDoc.getLong("usedCount") ?: 0L
+                    transaction.update(voucherRef, "usedCount", (usedCount - 1L).coerceAtLeast(0L))
+                }
+
+                // Refund points to user
+                if (order.pointsUsed > 0 && userRef != null && userDoc != null && userDoc.exists()) {
+                    val currentPoints = (userDoc.getLong("points") ?: 0L).toInt()
+                    transaction.update(userRef, "points", currentPoints + order.pointsUsed)
                 }
 
                 val now = Timestamp.now()

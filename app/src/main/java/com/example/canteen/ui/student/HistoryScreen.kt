@@ -117,12 +117,26 @@ fun OrderHistoryCard(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        Text(
-            text = order.total.formatVnd(),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = order.total.formatVnd(),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Primary
+            )
+            if (order.discountAmount > 0L) {
+                Text(
+                    text = "Tiết kiệm ${order.discountAmount.formatVnd()}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = com.example.canteen.ui.common.theme.Success
+                )
+            }
+        }
     }
 }
 

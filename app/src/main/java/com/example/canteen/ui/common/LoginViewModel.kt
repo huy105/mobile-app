@@ -3,6 +3,7 @@ package com.example.canteen.ui.common
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.canteen.data.model.User
+import com.example.canteen.data.model.UserRole
 import com.example.canteen.data.repository.AuthRepository
 import com.example.canteen.data.repository.SeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -66,6 +67,10 @@ class LoginViewModel @Inject constructor(
             result.onSuccess { user ->
                 // Firestore rules require auth, so seed only after sign-in succeeded
                 seedRepository.seedIfEmpty()
+                seedRepository.seedMissingMenuItems()
+                if (user.userRole == UserRole.STUDENT) {
+                    seedRepository.grantStartingPointsIfMissing(user.uid)
+                }
                 _uiState.update { it.copy(isLoading = false, errorMessage = null) }
                 _eventFlow.emit(LoginEvent.LoginSuccess(user))
             }.onFailure {

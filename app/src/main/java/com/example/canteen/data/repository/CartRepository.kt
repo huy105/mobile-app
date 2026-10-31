@@ -10,7 +10,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class CartState(
-    val items: Map<String, OrderItem> = emptyMap()
+    val items: Map<String, OrderItem> = emptyMap(),
+    val voucherCode: String? = null,
+    val usePoints: Boolean = false
 ) {
     val itemList: List<OrderItem>
         get() = items.values.toList()
@@ -28,6 +30,8 @@ interface CartRepository {
     fun increaseQuantity(menuItemId: String)
     fun decreaseQuantity(menuItemId: String)
     fun removeItem(menuItemId: String)
+    fun setVoucherCode(code: String?)
+    fun setUsePoints(usePoints: Boolean)
     fun clearCart()
 }
 
@@ -86,6 +90,14 @@ class CartRepositoryImpl @Inject constructor() : CartRepository {
             updated.remove(menuItemId)
             current.copy(items = updated)
         }
+    }
+
+    override fun setVoucherCode(code: String?) {
+        _cartState.update { it.copy(voucherCode = code) }
+    }
+
+    override fun setUsePoints(usePoints: Boolean) {
+        _cartState.update { it.copy(usePoints = usePoints) }
     }
 
     override fun clearCart() {

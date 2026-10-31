@@ -1,5 +1,7 @@
 package com.example.canteen.ui.canteen
 
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.canteen.R
+import com.example.canteen.ui.common.components.CommonDatePickerDialog
+import com.example.canteen.ui.common.components.DateBar
 import com.example.canteen.ui.common.components.LoadingBox
 import com.example.canteen.ui.common.components.RawTag
 import com.example.canteen.ui.common.theme.Error
@@ -60,6 +64,7 @@ import com.example.canteen.ui.common.theme.Primary
 import com.example.canteen.ui.common.theme.SecondaryContainer
 import com.example.canteen.ui.common.theme.Success
 import com.example.canteen.ui.common.theme.SuccessContainer
+import com.example.canteen.ui.common.util.formatVnd
 import com.example.canteen.ui.common.theme.Surface
 import com.example.canteen.ui.common.theme.SurfaceVariant
 import java.time.Instant
@@ -77,7 +82,7 @@ fun DashboardScreen(
     var showDatePicker by remember { mutableStateOf(false) }
 
     if (showDatePicker) {
-        DashboardDatePickerDialog(
+        CommonDatePickerDialog(
             selectedDate = uiState.selectedDate,
             onDateSelected = { viewModel.selectDate(it) },
             onDismiss = { showDatePicker = false }
@@ -126,6 +131,10 @@ private fun DashboardTabletLayout(
     onNavigateToOrders: () -> Unit,
     onNavigateToMenu: () -> Unit
 ) {
+    val animRevenue by animateIntAsState(targetValue = uiState.revenue.toInt(), animationSpec = tween(400), label = "dashRevTab")
+    val animTotalOrders by animateIntAsState(targetValue = uiState.totalOrdersCount, animationSpec = tween(400), label = "dashOrdersTab")
+    val animItemsSold by animateIntAsState(targetValue = uiState.itemsSoldCount, animationSpec = tween(400), label = "dashItemsTab")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -133,13 +142,26 @@ private fun DashboardTabletLayout(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Date navigation bar
-        DashboardDateBar(
-            uiState = uiState,
+        DateBar(
+            selectedDate = uiState.selectedDate,
             isTablet = true,
             onPreviousDay = onPreviousDay,
             onNextDay = onNextDay,
             onResetToToday = onResetToToday,
-            onOpenDatePicker = onOpenDatePicker
+            onOpenDatePicker = onOpenDatePicker,
+            isToday = uiState.isToday,
+            formattedDate = uiState.formattedDate,
+            hasOrders = uiState.hasOrders,
+            emptyOrdersMessage = stringResource(R.string.dashboard_no_orders_day),
+            rightContent = if (uiState.isToday) {
+                {
+                    Text(
+                        text = stringResource(R.string.dashboard_realtime_subtitle),
+                        fontSize = 12.sp,
+                        color = OnSurfaceVariant
+                    )
+                }
+            } else null
         )
 
         // 4 Stat Cards in a row
@@ -149,21 +171,21 @@ private fun DashboardTabletLayout(
         ) {
             StatCard(
                 title = stringResource(R.string.dashboard_revenue),
-                value = uiState.revenueText,
+                value = animRevenue.toLong().formatVnd(),
                 subtitle = uiState.revenueSubtitle,
                 isHighlighted = true,
                 modifier = Modifier.weight(1f)
             )
             StatCard(
                 title = stringResource(R.string.dashboard_total_orders),
-                value = uiState.totalOrdersCount.toString(),
+                value = animTotalOrders.toString(),
                 subtitle = uiState.ordersSubtitle,
                 onClick = if (uiState.isToday) onNavigateToOrders else null,
                 modifier = Modifier.weight(1f)
             )
             StatCard(
                 title = stringResource(R.string.dashboard_items_sold),
-                value = uiState.itemsSoldCount.toString(),
+                value = animItemsSold.toString(),
                 subtitle = uiState.itemsSoldSubtitle,
                 modifier = Modifier.weight(1f)
             )
@@ -215,6 +237,10 @@ private fun DashboardPhoneLayout(
     onNavigateToOrders: () -> Unit,
     onNavigateToMenu: () -> Unit
 ) {
+    val animRevenue by animateIntAsState(targetValue = uiState.revenue.toInt(), animationSpec = tween(400), label = "dashRevPhone")
+    val animTotalOrders by animateIntAsState(targetValue = uiState.totalOrdersCount, animationSpec = tween(400), label = "dashOrdersPhone")
+    val animItemsSold by animateIntAsState(targetValue = uiState.itemsSoldCount, animationSpec = tween(400), label = "dashItemsPhone")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -223,13 +249,17 @@ private fun DashboardPhoneLayout(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Date navigation bar
-        DashboardDateBar(
-            uiState = uiState,
+        DateBar(
+            selectedDate = uiState.selectedDate,
             isTablet = false,
             onPreviousDay = onPreviousDay,
             onNextDay = onNextDay,
             onResetToToday = onResetToToday,
-            onOpenDatePicker = onOpenDatePicker
+            onOpenDatePicker = onOpenDatePicker,
+            isToday = uiState.isToday,
+            formattedDate = uiState.formattedDate,
+            hasOrders = uiState.hasOrders,
+            emptyOrdersMessage = stringResource(R.string.dashboard_no_orders_day)
         )
 
         // 2x2 Grid for Stats
@@ -239,14 +269,14 @@ private fun DashboardPhoneLayout(
         ) {
             StatCard(
                 title = stringResource(R.string.dashboard_revenue),
-                value = uiState.revenueText,
+                value = animRevenue.toLong().formatVnd(),
                 subtitle = uiState.revenueSubtitle,
                 isHighlighted = true,
                 modifier = Modifier.weight(1f)
             )
             StatCard(
                 title = stringResource(R.string.dashboard_total_orders),
-                value = uiState.totalOrdersCount.toString(),
+                value = animTotalOrders.toString(),
                 subtitle = uiState.ordersSubtitle,
                 onClick = if (uiState.isToday) onNavigateToOrders else null,
                 modifier = Modifier.weight(1f)
@@ -259,7 +289,7 @@ private fun DashboardPhoneLayout(
         ) {
             StatCard(
                 title = stringResource(R.string.dashboard_items_sold),
-                value = uiState.itemsSoldCount.toString(),
+                value = animItemsSold.toString(),
                 subtitle = uiState.itemsSoldSubtitle,
                 modifier = Modifier.weight(1f)
             )
@@ -288,199 +318,6 @@ private fun DashboardPhoneLayout(
             onClick = if (uiState.isToday) onNavigateToMenu else null,
             modifier = Modifier.fillMaxWidth()
         )
-    }
-}
-
-@Composable
-private fun DashboardDateBar(
-    uiState: DashboardUiState,
-    isTablet: Boolean,
-    onPreviousDay: () -> Unit,
-    onNextDay: () -> Unit,
-    onResetToToday: () -> Unit,
-    onOpenDatePicker: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Previous day button ‹
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .border(BorderStroke(1.5.dp, Outline), RoundedCornerShape(12.dp))
-                    .background(Surface)
-                    .clickable(onClick = onPreviousDay),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "‹",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurface
-                )
-            }
-
-            // Central Date Chip (dchip)
-            Box(
-                modifier = Modifier
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .border(BorderStroke(1.5.dp, Outline), RoundedCornerShape(12.dp))
-                    .background(Surface)
-                    .clickable(onClick = onOpenDatePicker)
-                    .padding(horizontal = 14.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = uiState.formattedDate,
-                        fontSize = if (isTablet) 15.sp else 13.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = OnSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    if (uiState.isToday) {
-                        RawTag(
-                            label = stringResource(R.string.tag_today),
-                            backgroundColor = SuccessContainer,
-                            textColor = Success
-                        )
-                    } else {
-                        RawTag(
-                            label = stringResource(R.string.tag_past_day),
-                            backgroundColor = SurfaceVariant,
-                            textColor = OnSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            // Next day button › (disabled & dimmed when today)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .border(
-                        BorderStroke(1.5.dp, if (uiState.isToday) Outline.copy(alpha = 0.5f) else Outline),
-                        RoundedCornerShape(12.dp)
-                    )
-                    .background(Surface)
-                    .alpha(if (uiState.isToday) 0.4f else 1f)
-                    .clickable(enabled = !uiState.isToday, onClick = onNextDay),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "›",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (uiState.isToday) OnSurfaceVariant.copy(alpha = 0.5f) else OnSurface
-                )
-            }
-
-            // Quick "Hôm nay" button (only visible when !isToday)
-            if (!uiState.isToday) {
-                Box(
-                    modifier = Modifier
-                        .height(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(BorderStroke(1.5.dp, Primary), RoundedCornerShape(12.dp))
-                        .background(Surface)
-                        .clickable(onClick = onResetToToday)
-                        .padding(horizontal = if (isTablet) 14.dp else 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.btn_today),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Primary
-                    )
-                }
-            }
-
-            if (isTablet) {
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Realtime subtitle (only visible when viewing today)
-                if (uiState.isToday) {
-                    Text(
-                        text = stringResource(R.string.dashboard_realtime_subtitle),
-                        fontSize = 12.sp,
-                        color = OnSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        // Empty orders note when viewing a date without orders
-        if (!uiState.hasOrders) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.dashboard_no_orders_day),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = OnSurfaceVariant,
-                modifier = Modifier.padding(start = 4.dp, top = 2.dp)
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DashboardDatePickerDialog(
-    selectedDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val initialMillis = remember(selectedDate) {
-        selectedDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-    }
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialMillis,
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                val date = Instant.ofEpochMilli(utcTimeMillis).atZone(ZoneOffset.UTC).toLocalDate()
-                return !date.isAfter(LocalDate.now())
-            }
-
-            override fun isSelectableYear(year: Int): Boolean {
-                return year <= LocalDate.now().year
-            }
-        }
-    )
-
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        val picked = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
-                        onDateSelected(picked)
-                    }
-                    onDismiss()
-                }
-            ) {
-                Text("Chọn", color = Primary, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Hủy", color = OnSurfaceVariant)
-            }
-        }
-    ) {
-        DatePicker(state = datePickerState)
     }
 }
 

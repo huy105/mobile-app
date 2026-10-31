@@ -24,9 +24,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Seed sample data for today if menu/slots are empty
+        // Seed sample data for today if menu/slots are empty, and ensure 20 items / vouchers
         lifecycleScope.launch {
             seedRepository.seedIfEmpty()
+            seedRepository.seedMissingMenuItems()
         }
 
         setContent {
